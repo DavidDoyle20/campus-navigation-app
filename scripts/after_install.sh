@@ -3,11 +3,11 @@
 # kill any servers that may be running in the background 
 sudo pkill -f runserver
 
-# kill frontend servers if you are deploying any frontend
-# sudo pkill -f tailwind
-# sudo pkill -f node
-
 cd /home/ubuntu/campus-navigation-app/
+
+# Update system and install GDAL dependencies
+sudo apt-get update
+sudo apt-get install -y gdal-bin libgdal-dev
 
 # activate virtual environment
 python3 -m venv venv
