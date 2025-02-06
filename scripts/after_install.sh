@@ -11,6 +11,9 @@ source venv/bin/activate
 
 # Install requirements with GDAL first
 pip install --no-cache-dir "GDAL==$GDAL_VERSION.*"
+
+# Install Django explicitly because it was failing
+pip install django==4.2  # Match your project's version
 pip install -r /home/ubuntu/campus-navigation-app/requirements.txt
 
 # Configure GDAL paths
