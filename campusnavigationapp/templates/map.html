@@ -1,0 +1,29 @@
+{% load static %}
+{% load leaflet_tags %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link href="{% static 'styles.css' %}" rel="stylesheet" type="text/css">
+    {% leaflet_js %}
+    {% leaflet_css %}
+    <title>Campus Navigation App</title>
+</head>
+
+<body>
+    <div id="map"></div>
+    {% leaflet_map "map" callback="map_init" %}
+    <script>
+        function map_init(map, options) {
+            var marker = L.marker([43.075529279502135, -87.88390146137833]).addTo(map);
+
+            // Add click event
+            map.on('click', function (e) {
+                var newMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                newMarker.bindPopup("Latitude: " + e.latlng.lat + "<br>Longitude: " + e.latlng.lng);
+            });
+        }
+    </script>
+</body>
+
+</html>
