@@ -146,3 +146,6 @@ if platform.system() == 'Darwin':  # Mac
 elif platform.system() == 'Linux':  # Linux
     GDAL_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgdal.so'
     GEOS_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgeos_c.so'
+elif platform.system() == 'Windows':  # Windows
+    GDAL_LIBRARY_PATH = 'C:\\OSGeo4W\\bin\\gdal310.dll'
+    GEOS_LIBRARY_PATH = 'C:\\OSGeo4W\\bin\\geos_c.dll'
