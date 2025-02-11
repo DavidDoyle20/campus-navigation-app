@@ -23,10 +23,10 @@ GDAL_VERSION=$(gdal-config --version | awk -F'[.]' '{print $1"."$2}')
 
 
 # Django setup
-python manage.py migrate
+python3 manage.py migrate
 
 # Collect static files
-python manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 
 # Restart your application server (e.g., Gunicorn)
 sudo systemctl restart gunicorn
