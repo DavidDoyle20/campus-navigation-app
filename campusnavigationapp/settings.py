@@ -134,7 +134,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LEAFLET_CONFIG = {
     'DEFAULT_CENTER': (43.077622, -87.882799),  # UWM coordinates
-    'DEFAULT_ZOOM': 16,
+    'DEFAULT_ZOOM': 18,
+    'MIN_ZOOM': 16,
+    'MAX_ZOOM': 20,
     'TILES': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     'ATTRIBUTION_PREFIX': 'Powered by Django-Leaflet',
 }
