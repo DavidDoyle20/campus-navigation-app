@@ -24,6 +24,3 @@ GDAL_VERSION=$(gdal-config --version | awk -F'[.]' '{print $1"."$2}')
 
 # Django setup
 python manage.py migrate
-
-# run server
-screen -d -m python3 manage.py runserver 0:8000
