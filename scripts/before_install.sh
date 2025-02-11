@@ -5,6 +5,7 @@ sudo rm -rf /home/ubuntu/install
 
 # install CodeDeploy agent
 sudo apt-get -y update
+sudo apt install -y python3-pip python3-venv nginx
 sudo apt-get -y install ruby
 sudo apt-get -y install wget
 cd /home/ubuntu
