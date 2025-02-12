@@ -172,11 +172,14 @@ function displayIndoorData(data, map) {
       };
     },
     onEachFeature: function (feature, layer) {
-      if (feature.properties && feature.properties.ref) {
+      if (
+        feature.properties &&
+        (feature.properties.ref || feature.properties.name)
+      ) {
         const center = layer.getBounds().getCenter();
         const icon = L.divIcon({
           className: "area-label",
-          html: feature.properties.ref,
+          html: feature.properties.ref || feature.properties.name,
           iconSize: null,
           iconSize: [100, 40],
           iconAnchor: [50, 10], // Center the icon on the point
