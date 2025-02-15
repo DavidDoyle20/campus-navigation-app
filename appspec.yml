@@ -5,12 +5,6 @@ files:
     destination: /home/ubuntu/campus-navigation-app
 
 permissions:
-  - object: /home/ubuntu/campus-navigation-app
-    pattern: "**"
-    owner: ubuntu
-    group: ubuntu
-    mode: 644
-
   - object: /home/ubuntu/campus-navigation-app/scripts
     pattern: "*.sh"
     owner: ubuntu
