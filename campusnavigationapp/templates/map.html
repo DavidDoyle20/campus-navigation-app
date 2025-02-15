@@ -1,20 +1,36 @@
 {% load static %}
-{% load leaflet_tags %}
 <!DOCTYPE html>
 <html>
 
 <head>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    {% leaflet_js %}
-    {% leaflet_css %}
     <link href="{% static 'styles.css' %}" rel="stylesheet" type="text/css">
+    <link href="https://unpkg.com/maplibre-gl-indoorequal@latest/maplibre-gl-indoorequal.css" rel="stylesheet" />
+    <link href="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.css" rel="stylesheet" />
+    
+    <script src="https://unpkg.com/maplibre-gl@^5.1.0/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/maplibre-gl-indoorequal@latest/dist/maplibre-gl-indoorequal.umd.min.js"></script>
+
     <title>Campus Navigation App</title>
 </head>
-
-<body>
-    <div id="map"></div>
-    <script src="{% static 'map.js' %}"></script>
-    {% leaflet_map "map" callback="window.map_init" %}
-</body>
-
+    <body>
+        <div id="map-container">
+            <div id="map-overlay"></div>
+            <div id="map"></div>
+            <div id="sidebar"></div>
+            <button id="toggle-sidebar" class="sidebar-toggle">
+                <i class="fas fa-bars" id="hamburger-icon"></i>
+                <i class="fas fa-times" id="close-icon" style="display: none;"></i>
+            </button>
+            <button class="second-button">
+                <i class="fa-regular fa-bookmark"></i>
+            </button>
+        </div>
+        <script src="{% static 'map.js' %}"></script>
+    </body>
 </html>

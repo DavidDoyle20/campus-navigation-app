@@ -16,8 +16,8 @@ sudo ./install auto
 # update os & install python3
 sudo apt-get update
 sudo apt-get install -y \
-    python3 python3-dev python3-pip python3-venv \
-    gdal-bin libgdal-dev python3-gdal
+    python3 python3-dev python3-pip python3-venv
+    # gdal-bin libgdal-dev python3-gdal
 
 # delete app
 sudo rm -rf /home/ubuntu/campus-navigation-app

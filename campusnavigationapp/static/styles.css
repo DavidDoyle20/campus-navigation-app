@@ -1,23 +1,90 @@
-html,
 body {
     margin: 0;
     padding: 0;
-    height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
 }
-
-#map {
-    height: 100%;
+#map-container {
+    position: relative;
+    height: 100vh;
     width: 100%;
 }
-
-.area-label {
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    font-weight: bold;
-    color: #333;
-    font-size: 12px;
+#map {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+#map-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    pointer-events: none;
+    z-index: 1;
+}
+#map-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    z-index: 5000;
+}
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: -400px;
+    height: 100%;
+    width: 250px;
+    background-color: white;
+    transition: 0.5s;
+    overflow-x: hidden;
+    z-index: 9000;
     text-align: center;
-    text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+#sidebar.open {
+    left: 0;
+}
+.sidebar-toggle, .second-button {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 9001;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.3s;
+}
+.sidebar-toggle {
+    top: 20px;
+}
+.second-button {
+    top: 70px;
+   /* Positioned 50px below the first button */
+    transition: opacity 0.3s, visibility 0.3s;
+}
+.sidebar-toggle i, .second-button i {
+    font-size: 20px;
+    color: #333;
+}
+.sidebar-toggle i {
+    transition: opacity 0.3s ease;
+}
+.sidebar-toggle:hover, .second-button:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+#sidebar.open ~ .second-button {
+    opacity: 0;
+    visibility: hidden;
 }
