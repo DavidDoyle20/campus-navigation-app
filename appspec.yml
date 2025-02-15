@@ -3,10 +3,32 @@ os: linux
 files:
   - source: /
     destination: /home/ubuntu/campus-navigation-app
+
+permissions:
+  - object: /home/ubuntu/campus-navigation-app
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
+
+  - object: /home/ubuntu/campus-navigation-app/scripts
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+    mode: 755
+
 hooks:
   BeforeInstall:
-      - location: scripts/before_install.sh
+    - location: scripts/before_install.sh
+      timeout: 300
+      runas: ubuntu
+
   AfterInstall:
-      - location: scripts/after_install.sh
+    - location: scripts/after_install.sh
+      timeout: 300
+      runas: ubuntu
+
   ApplicationStart:
-      - location: scripts/start_application.sh
+    - location: scripts/start_application.sh
+      timeout: 300
+      runas: ubuntu
