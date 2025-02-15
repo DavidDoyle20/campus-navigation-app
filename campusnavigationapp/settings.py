@@ -46,9 +46,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'leaflet',
-    'djgeojson',
-    'django.contrib.gis',
 
     'campusnavigationapp'
 ]
@@ -138,23 +135,3 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-LEAFLET_CONFIG = {
-    'DEFAULT_CENTER': (43.077622, -87.882799),  # UWM coordinates
-    'DEFAULT_ZOOM': 18,
-    'MIN_ZOOM': 16,
-    'MAX_ZOOM': 20,
-    'TILES': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    'ATTRIBUTION_PREFIX': 'Powered by Django-Leaflet',
-}
-
-# Have to have gdal installed
-if platform.system() == 'Darwin':  # Mac
-    GDAL_LIBRARY_PATH = '/opt/homebrew/opt/gdal/lib/libgdal.dylib'
-    GEOS_LIBRARY_PATH = '/opt/homebrew/opt/geos/lib/libgeos_c.dylib'
-elif platform.system() == 'Linux':  # Linux
-    GDAL_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgdal.so'
-    GEOS_LIBRARY_PATH = '/usr/lib/x86_64-linux-gnu/libgeos_c.so'
-elif platform.system() == 'Windows':  # Windows
-    GDAL_LIBRARY_PATH = 'C:\\OSGeo4W\\bin\\gdal310.dll'
-    GEOS_LIBRARY_PATH = 'C:\\OSGeo4W\\bin\\geos_c.dll'

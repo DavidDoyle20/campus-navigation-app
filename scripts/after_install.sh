@@ -9,17 +9,17 @@ cd /home/ubuntu/campus-navigation-app/
 python3 -m venv venv
 source venv/bin/activate
 
-# Install requirements with GDAL first
-pip install --no-cache-dir "GDAL==$GDAL_VERSION.*"
+# # Install requirements with GDAL first
+# pip install --no-cache-dir "GDAL==$GDAL_VERSION.*"
 
 # Install Django explicitly because it was failing
 pip install django==4.2  # Match your project's version
 pip install -r /home/ubuntu/campus-navigation-app/requirements.txt
 
-# Configure GDAL paths
-export CPLUS_INCLUDE_PATH=/usr/include/gdal
-export C_INCLUDE_PATH=/usr/include/gdal
-GDAL_VERSION=$(gdal-config --version | awk -F'[.]' '{print $1"."$2}')
+# # Configure GDAL paths
+# export CPLUS_INCLUDE_PATH=/usr/include/gdal
+# export C_INCLUDE_PATH=/usr/include/gdal
+# GDAL_VERSION=$(gdal-config --version | awk -F'[.]' '{print $1"."$2}')
 
 
 # Django setup
