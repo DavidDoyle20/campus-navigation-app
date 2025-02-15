@@ -9,10 +9,10 @@ permissions:
     pattern: "**"
     owner: ubuntu
     group: ubuntu
-    mode: 755
+    mode: 644
 
   - object: /home/ubuntu/campus-navigation-app/scripts
-    pattern: "**"
+    pattern: "*.sh"
     owner: ubuntu
     group: ubuntu
     mode: 755
