@@ -108,7 +108,7 @@ toggleButton.addEventListener("click", () => {
 // TODO: Add options in the popup menu (e.g. set start/end, copy coordinates, change floor, etc.)
 let currentLevel = 0;
 
-gl.on("contextmenu", (e) => {
+function handleMarkerCreation(e) {
   e.preventDefault();
   let marker = new maplibregl.Marker({
     color: "#FF0000",
@@ -130,6 +130,27 @@ gl.on("contextmenu", (e) => {
 
   marker.on("click", (e) => marker.togglePopup());
   indoorEqual.addMarker(marker, currentLevel);
+}
+gl.on("contextmenu", handleMarkerCreation);
+
+// Handle long-press event
+let longPressTimer;
+const LONG_PRESS_DURATION = 500; // milliseconds
+
+gl.getCanvas().addEventListener("touchstart", (e) => {
+  longPressTimer = setTimeout(() => {
+    const touch = e.touches[0];
+    const lngLat = gl.unproject([touch.clientX, touch.clientY]);
+    handleMarkerCreation({ lngLat, preventDefault: () => {} });
+  }, LONG_PRESS_DURATION);
+});
+
+gl.getCanvas().addEventListener("touchend", () => {
+  clearTimeout(longPressTimer);
+});
+
+gl.getCanvas().addEventListener("touchmove", () => {
+  clearTimeout(longPressTimer);
 });
 
 // Listen for level changes
