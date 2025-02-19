@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Campus Navigation System - Login</title>
     <style>
-        /* Background Animation */
         body {
             margin: 0;
             padding: 0;
@@ -39,7 +38,6 @@
             100% { transform: translateY(0); opacity: 0.3; }
         }
 
-        /* Login Box */
         .login-container {
             background: rgba(255, 255, 255, 0.1);
             padding: 20px;
@@ -80,13 +78,13 @@
             background: #ff4f9a;
         }
 
-        #registerBtn {
+        #registerBtn, #guestBtn {
             background: transparent;
             border: 1px solid white;
             color: white;
         }
 
-        #registerBtn:hover {
+        #registerBtn:hover, #guestBtn:hover {
             background: rgba(255, 255, 255, 0.2);
         }
 
@@ -97,7 +95,6 @@
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
     <div class="background-animation">
         <div class="circle" style="top: 10%; left: 20%; animation-duration: 12s;"></div>
         <div class="circle" style="top: 30%; left: 50%; animation-duration: 8s;"></div>
@@ -105,17 +102,16 @@
         <div class="circle" style="top: 80%; left: 10%; animation-duration: 10s;"></div>
     </div>
 
-    <!-- Login Form -->
     <div class="login-container">
         <h2>Smart Campus Navigation System</h2>
         <input type="text" id="loginUsername" placeholder="Username">
         <input type="password" id="loginPassword" placeholder="Password">
         <button onclick="loginUser()">Login</button>
+        <button id="guestBtn" onclick="continueAsGuest()">Continue as Guest</button>
         <button id="registerBtn" onclick="redirectToRegister()">Register</button>
         <p id="loginMessage"></p>
     </div>
 
-    <!-- JavaScript for Login and Register -->
     <script>
         async function loginUser() {
             let username = document.getElementById("loginUsername").value;
@@ -124,43 +120,36 @@
 
             let response = await fetch("/login/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCSRFToken()
-                },
+                headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
                 body: JSON.stringify({ username, password })
             });
 
             let result = await response.json();
-            
+            message.style.color = result.success ? "green" : "red";
+            message.innerText = result.message;
+
             if (result.success) {
-                message.style.color = "green";
-                message.innerText = result.message;
-                setTimeout(() => {
-                    window.location.href = "/map/";  // Redirect to the map page after login
-                }, 1000);
-            } else {
-                message.style.color = "red";
-                message.innerText = result.message;
+                setTimeout(() => { window.location.href = "/map/"; }, 1000);
             }
+        }
+
+        function continueAsGuest() {
+            window.location.href = "/map/";
         }
 
         function redirectToRegister() {
             window.location.href = "/register/";
         }
 
-        // CSRF Token Helper Function
         function getCSRFToken() {
-            let cookieValue = null;
             let cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                let cookie = cookies[i].trim();
-                if (cookie.startsWith("csrftoken=")) {
-                    cookieValue = cookie.substring("csrftoken=".length, cookie.length);
-                    break;
+            for (let cookie of cookies) {
+                let trimmed = cookie.trim();
+                if (trimmed.startsWith("csrftoken=")) {
+                    return trimmed.substring("csrftoken=".length);
                 }
             }
-            return cookieValue;
+            return null;
         }
     </script>
 </body>
