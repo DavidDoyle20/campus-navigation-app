@@ -1,69 +1,41 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    <link href="{% static 'loginRegisterStyles.css' %}" rel="stylesheet" type="text/css">
     <title>Register</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(to right, #2b5876, #4e4376);
-            overflow: hidden;
-        }
-
-        .register-container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            width: 300px;
-        }
-
-        h2 {
-            color: white;
-        }
-
-        input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 5px;
-            text-align: center;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #ff7eb3;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        button:hover {
-            background: #ff4f9a;
-        }
-
-        a {
-            display: block;
-            color: white;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="circle" style="top: 10%; left: 20%; animation-duration: 12s;"></div>
+        <div class="circle" style="top: 30%; left: 50%; animation-duration: 8s;"></div>
+        <div class="circle" style="top: 60%; left: 70%; animation-duration: 14s;"></div>
+        <div class="circle" style="top: 80%; left: 10%; animation-duration: 10s;"></div>
+    </div>
+    
+    <div class="register-container">
+        <h2>Register</h2>
+        <input type="text" id="registerUsername" placeholder="Username" required>
+        <input type="password" id="registerPassword" placeholder="Password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+        <button onclick="register()">Register</button>
+        <p id="registerMessage"></p>
+        <a href="{% url 'login' %}">Back to Login</a>
+    </div>
     <script>
         async function register() {
             let username = document.getElementById("registerUsername").value;
@@ -77,7 +49,7 @@
                 return;
             }
 
-            let response = await fetch("/register/", {
+            let response = await fetch("{% url 'register' %}", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
                 body: JSON.stringify({ username, password })
@@ -88,20 +60,19 @@
             message.innerText = result.message;
 
             if (result.success) {
-                setTimeout(() => { window.location.href = "/login/"; }, 1500);
+                setTimeout(() => { window.location.href = "{% url 'login' %}"; }, 1500);
             }
         }
+        function getCSRFToken() {
+            let cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                let trimmed = cookie.trim();
+                if (trimmed.startsWith("csrftoken=")) {
+                    return trimmed.substring("csrftoken=".length);
+                }
+            }
+            return null;
+        }
     </script>
-</head>
-<body>
-    <div class="register-container">
-        <h2>Register</h2>
-        <input type="text" id="registerUsername" placeholder="Username" required>
-        <input type="password" id="registerPassword" placeholder="Password" required>
-        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-        <button onclick="register()">Register</button>
-        <p id="registerMessage"></p>
-        <a href="/login/">Back to Login</a>
-    </div>
 </body>
 </html>
