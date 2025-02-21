@@ -158,3 +158,25 @@ indoorEqual.on("levelchange", (level) => {
   currentLevel = level;
   console.log(`Level changed to ${level}`);
 });
+
+
+<!-- get the users current location. display it as a marker on the map. -->
+navigator.geolocation.watchPosition(currentLocationSuccess,currentLocationError);
+
+function currentLocationSuccess(pos){
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+
+  let marker = new maplibregl.Marker();
+  marker.setLngLat([lng,lat]);
+  marker.addTo(gl);
+}
+function currentLocationError(err){
+  if (err.code === 1){
+    <!-- user declined geolocation -->
+  }
+  else
+  {
+    <!-- could not get geolocation -->
+  }
+}
