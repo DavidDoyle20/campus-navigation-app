@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to right, #2b5876, #4e4376);
+            overflow: hidden;
+        }
+
+        .register-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 300px;
+        }
+
+        h2 {
+            color: white;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #ff7eb3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #ff4f9a;
+        }
+
+        a {
+            display: block;
+            color: white;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script>
+        async function register() {
+            let username = document.getElementById("registerUsername").value;
+            let password = document.getElementById("registerPassword").value;
+            let confirmPassword = document.getElementById("confirmPassword").value;
+            let message = document.getElementById("registerMessage");
+
+            if (password !== confirmPassword) {
+                message.style.color = "red";
+                message.innerText = "Passwords do not match!";
+                return;
+            }
+
+            let response = await fetch("/register/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+                body: JSON.stringify({ username, password })
+            });
+
+            let result = await response.json();
+            message.style.color = result.success ? "green" : "red";
+            message.innerText = result.message;
+
+            if (result.success) {
+                setTimeout(() => { window.location.href = "/login/"; }, 1500);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="register-container">
+        <h2>Register</h2>
+        <input type="text" id="registerUsername" placeholder="Username" required>
+        <input type="password" id="registerPassword" placeholder="Password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+        <button onclick="register()">Register</button>
+        <p id="registerMessage"></p>
+        <a href="/login/">Back to Login</a>
+    </div>
+</body>
+</html>
