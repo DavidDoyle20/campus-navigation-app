@@ -107,9 +107,16 @@ toggleButton.addEventListener("click", () => {
 // Marker functionality
 // TODO: Add options in the popup menu (e.g. set start/end, copy coordinates, change floor, etc.)
 let currentLevel = 0;
+let longPressTimer;
+const LONG_PRESS_DURATION = 500; // Milliseconds
 
 function handleMarkerCreation(e) {
-  e.preventDefault();
+  // Ensure we have valid coordinates
+  if (!e.lngLat) {
+    console.warn("No lngLat available from the event.");
+    return;
+  }
+
   let marker = new maplibregl.Marker({
     color: "#FF0000",
   })
@@ -120,6 +127,7 @@ function handleMarkerCreation(e) {
   popupContent.innerHTML = `
     <button id="remove-marker">Remove Marker</button>
   `;
+
   const popup = new maplibregl.Popup().setDOMContent(popupContent);
   marker.setPopup(popup);
 
@@ -133,25 +141,28 @@ function handleMarkerCreation(e) {
 }
 gl.on("contextmenu", handleMarkerCreation);
 
-// Handle long-press event
-let longPressTimer;
-const LONG_PRESS_DURATION = 500; // milliseconds
+function handleTouchStart(e) {
+  // Prevent action if there are multiple touches
+  if (e.originalEvent.touches.length > 1) {
+    return;
+  }
 
-gl.getCanvas().addEventListener("touchstart", (e) => {
   longPressTimer = setTimeout(() => {
-    const touch = e.touches[0];
-    const lngLat = gl.unproject([touch.clientX, touch.clientY]);
-    handleMarkerCreation({ lngLat, preventDefault: () => {} });
+    handleMarkerCreation(e);
   }, LONG_PRESS_DURATION);
-});
+}
 
-gl.getCanvas().addEventListener("touchend", () => {
+function handleTouchEnd(e) {
   clearTimeout(longPressTimer);
-});
+}
 
-gl.getCanvas().addEventListener("touchmove", () => {
+function handleTouchMove(e) {
   clearTimeout(longPressTimer);
-});
+}
+
+gl.on("touchstart", handleTouchStart);
+gl.on("touchend", handleTouchEnd);
+gl.on("touchmove", handleTouchMove);
 
 // Listen for level changes
 indoorEqual.on("levelchange", (level) => {
