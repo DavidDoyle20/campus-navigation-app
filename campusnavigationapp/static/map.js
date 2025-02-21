@@ -59,3 +59,27 @@ toggleButton.addEventListener("click", () => {
     closeIcon.style.display = "none";
   }
 });
+
+
+
+<!-- get the users current location. display it as a marker on the map. -->
+navigator.geolocation.watchPosition(currentLocationSuccess,currentLocationError);
+
+function currentLocationSuccess(pos){
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+  const accuracy = pos.coords.accuracy;
+
+  let marker = new maplibregl.Marker()
+  .setLngLat([lng,lat])
+  .addTo(gl);
+}
+function currentLocationError(err){
+  if (err.code === 1){
+    <!-- user declined geolocation -->
+  }
+  else
+  {
+    <!-- could not get geolocation -->
+  }
+}
