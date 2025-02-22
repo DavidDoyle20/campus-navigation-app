@@ -17,8 +17,6 @@ import boto3
 import logging
 from pathlib import Path
 
-DEFAULT_DB_URL = "sqlite:///db.sqlite3"
-
 load_dotenv()
 
 # Set variables
@@ -130,21 +128,26 @@ AUTHENTICATION_BACKENDS = (
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-config = dj_database_url.config(
-        default=DATABASE_URL, 
-        conn_max_age=600, 
-        conn_health_checks=True
-        )
-config.update({
-    'OPTIONS': {
-        'options': '-c search_path=campusnavigationapp',
-    },
-    'SCHEMA': 'campusnavigationapp',
-})
+if not DEBUG:
+    config = dj_database_url.config(
+            default=DATABASE_URL, 
+            conn_max_age=600, 
+            conn_health_checks=True
+            )
+    config.update({
+        'OPTIONS': {
+            'options': '-c search_path=campusnavigationapp',
+        },
+        'SCHEMA': 'campusnavigationapp',
+    })
 
-DATABASES = {
-    'default': config
-}
+    DATABASES = {
+        'default': config
+    }
+else:
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL)
+    }
 
 
 # Password validation
