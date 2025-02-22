@@ -55,7 +55,6 @@ DATABASE_URL= get_env_variable('DATABASE_URL', '/campusnavigation/DATABASE_URL')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-print(DATABASE_URL)
 # Logging 
 print("\nEnvironment Variables")
 print(f"DEBUG: {DEBUG}")
