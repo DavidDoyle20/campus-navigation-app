@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import os
+import dj_database_url
 from dotenv import load_dotenv
 import boto3
 import logging
@@ -47,7 +48,8 @@ EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', '/campusnavigation/EMAIL_BACKE
 EMAIL_HOST = get_env_variable('EMAIL_HOST', '/campusnavigation/EMAIL_HOST')
 EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '/campusnavigation/EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '/campusnavigation/EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL=get_env_variable('DEFAULT_FROM_EMAIL', '/campusnavigation/DEFAULT_FROM_EMAIL')
+DEFAULT_FROM_EMAIL= get_env_variable('DEFAULT_FROM_EMAIL', '/campusnavigation/DEFAULT_FROM_EMAIL')
+DATABASE_URL= get_env_variable('DATABASE_URL', '/campusnavigation/DATABASE_URL')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
@@ -57,6 +59,7 @@ print(f"DEBUG: {DEBUG}")
 print(f"SECRET_KEY: {SECRET_KEY}")
 print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
 print(f"EMAIL_HOST: {EMAIL_HOST}")
+print(f"DATABASE_URL: {DATABASE_URL}")
 print("\n")
 boto3.set_stream_logger('', logging.DEBUG)
 
@@ -125,12 +128,26 @@ AUTHENTICATION_BACKENDS = (
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if not DEBUG:
+    config = dj_database_url.config(
+            default=DATABASE_URL, 
+            conn_max_age=600, 
+            conn_health_checks=True
+            )
+    config.update({
+        'OPTIONS': {
+            'options': '-c search_path=campusnavigationapp',
+        },
+        'SCHEMA': 'campusnavigationapp',
+    })
+
+    DATABASES = {
+        'default': config
     }
-}
+else:
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL)
+    }
 
 
 # Password validation
