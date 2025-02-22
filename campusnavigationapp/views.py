@@ -2,7 +2,7 @@ import logging
 
 from django.forms import ValidationError
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.conf import settings as django_settings
 from django.contrib.auth.models import User
 from django.contrib.auth import logout
@@ -12,15 +12,23 @@ from magiclink.forms import LoginForm
 from magiclink.helpers import get_or_create_user, create_magiclink, MagicLinkError, get_url_path
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 log = logging.getLogger(__name__)
 
-# TODO: Restrict map to logged in users
-class Map(View):
+class RedirectIfAuthenticatedMixin(UserPassesTestMixin):
+    def test_func(self):
+        return not self.request.user.is_authenticated
+
+    def handle_no_permission(self):
+        return redirect('map')
+
+class Map(LoginRequiredMixin, View):
     def get(self, request):
         return render(request, 'map.html')
     
-class Home(View):
+class Home(RedirectIfAuthenticatedMixin, View):
     def get(self, request):
         return render(request, 'index.html')
 
@@ -48,7 +56,6 @@ class DomainRestrictedLoginView(Login):
             get_or_create_user(email)
         
         redirect_url = self.login_redirect_url(request.GET.get('next', ''))
-        print("Redirect URL: ", redirect_url)
         try:
             magiclink = create_magiclink(
                 email, request, redirect_url=redirect_url
