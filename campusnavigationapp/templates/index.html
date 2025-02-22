@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Campus Navigation App - Welcome{% endblock %}
+
+{% block content %}
+<div class="background-container"></div>
+
+<div class="login-container">
+    <h1>Welcome to Campus Navigation App</h1>
+    <p>Find your way around campus with ease.</p>
+    <input type="submit" name="loginbutton" onclick="location.href=`{% url 'login' %}`" value="Login"></input>
+</div>
+<style>
+    .background-container {
+        background-image: url("{% static 'campus.png' %}");
+        background-size: cover;
+        background-position: center;
+        height: 100vh;
+        width: 100%;
+        filter: blur(8px);
+        -webkit-filter: blur(8px);
+        position: absolute;
+        z-index: -1;
+    }
+    .login-container {
+        background-color: rgb(0,0,0,0.5);
+    }
+    input {
+        background: #FFBD00;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    input:hover {
+        background: #e3a800;
+    }
+    p {
+        color: white;
+        font-size: 14px;
+    }
+
+
+</style>
+{% endblock %}
+

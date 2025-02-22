@@ -11,20 +11,46 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 import os
+from dotenv import load_dotenv
+import boto3
 from pathlib import Path
+
+load_dotenv()
+
+# Set variables
+def get_ssm_parameter(param_name, default=None):
+    ssm = boto3.client('ssm')
+    try:
+        response = ssm.get_parameter(Name=param_name, WithDecryption=True)
+        return response['Parameter']['Value']
+    except ssm.exceptions.ParameterNotFound:
+        return default
+
+def get_env_variable(var_name, ssm_path=None):
+    # First, try to get from environment (including .env file)
+    value = os.getenv(var_name)
+    if value is not None:
+        return value
+    
+    # If not found in environment, try SSM if path is provided
+    if ssm_path:
+        return get_ssm_parameter(ssm_path)
+    
+    return None
+
+
+# Access variables
+DEBUG = get_env_variable('DEBUG', '/campusnavigation/DEBUG') == 'True'
+SECRET_KEY = get_env_variable('SECRET_KEY', '/campusnavigation/SECRET_KEY')
+EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', '/campusnavigation/EMAIL_BACKEND')
+EMAIL_HOST = get_env_variable('EMAIL_HOST', '/campusnavigation/EMAIL_HOST')
+EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '/campusnavigation/EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '/campusnavigation/EMAIL_HOST_PASSWORD')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@5mpjic(opu_=er=7kyqy28*^=dv8b!@@$(zghm8fh2_ai&^ca'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
@@ -46,7 +72,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'campusnavigationapp'
+    'campusnavigationapp',
+    'magiclink',
 ]
 
 MIDDLEWARE = [
@@ -64,7 +91,7 @@ ROOT_URLCONF = 'campusnavigationapp.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,6 +106,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'campusnavigationapp.wsgi.application'
 
+AUTHENTICATION_BACKENDS = (
+    'magiclink.backends.MagicLinkBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -136,3 +167,28 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = ['https://uwmnav.dedyn.io']
+
+MAGICLINK_LOGIN_TEMPLATE_NAME = 'magiclink/login.html'
+MAGICLINK_LOGIN_SENT_TEMPLATE_NAME = 'magiclink/login_sent.html'
+MAGICLINK_LOGIN_FAILED_TEMPLATE_NAME = 'magiclink/login_failed.html'
+
+LOGIN_REDIRECT_URL = '/map/'
+MAGICLINK_EMAIL_STYLES = {
+    'background-colour': '#ffffff',
+    'main-text-color': '#000000',
+    'button-background-color': '#ffbd00',
+    'button-text-color': '#ffffff',
+}
+
+MAGICLINK_AUTH_TIMEOUT = 300
+MAGICLINK_IGNORE_EMAIL_CASE = True
+MAGICLINK_EMAIL_AS_USERNAME = True
+MAGICLINK_REQUIRE_SIGNUP = False
+REQUIRE_SIGNUP = False
+REQUIRE_SAME_BROWSER = False
+MAGICLINK_REQUIRE_SAME_BROWSER = False
+MAGICLINK_REQUIRE_SAME_IP = False
+MAGICLINK_ALLOW_SUPERUSER_LOGIN = True
+MAGICLINK_ALLOW_STAFF_LOGIN = True
+MAGICLINK_VERIFY_INCLUDE_EMAIL = False
+LOGIN_SENT_REDIRECT = 'magiclink:login_sent'
