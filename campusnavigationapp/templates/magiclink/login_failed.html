@@ -1,0 +1,19 @@
+{% extends "base.html" %} 
+{% block title %}Campus Navigation App - Failed{% endblock %}
+
+{% block content %}
+<div class="background-animation">
+    <div class="circle" style="top: 10%; left: 20%; animation-duration: 12s;"></div>
+    <div class="circle" style="top: 30%; left: 50%; animation-duration: 8s;"></div>
+    <div class="circle" style="top: 60%; left: 70%; animation-duration: 14s;"></div>
+    <div class="circle" style="top: 80%; left: 10%; animation-duration: 10s;"></div>
+</div>
+
+<div class="login-container">
+    <h2>Login Failed</h2>
+    <p>It was not possible to log you in due to:</p>
+    <p>{{ login_error }}</p>
+    <button onclick="window.location.href=`{% url 'login' %}`">Back to Login</button>
+</div>
+{% endblock %}
+

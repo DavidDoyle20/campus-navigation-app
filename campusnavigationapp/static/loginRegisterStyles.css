@@ -1,3 +1,12 @@
+* { 
+    font-size: 100%; 
+    font-family: 'Roboto'; 
+}
+
+p {
+    color:rgba(255, 255, 255, 0.2);
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -41,7 +50,7 @@ body {
     width: 300px;
 }
 
-h2 {
+h2, h1 {
     color: white;
     margin-bottom: 20px;
     font-family: 'Roboto';
@@ -55,6 +64,7 @@ input, button {
     border-radius: 5px;
     outline: none;
     box-sizing: border-box;
+    cursor: pointer;
 }
 
 input {
@@ -86,4 +96,17 @@ button:hover {
 #loginMessage {
     margin-top: 10px;
     font-size: 14px;
+} 
+
+label {
+    visibility: hidden;
+}
+
+ul.errorlist {
+    color: red;
+    list-style-type: none;
+    margin: 0 auto;
+    padding-left: 0;
+    padding: 30px;
+    width: fit-content;
 }
