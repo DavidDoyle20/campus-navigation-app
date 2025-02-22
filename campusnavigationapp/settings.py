@@ -47,13 +47,17 @@ EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', '/campusnavigation/EMAIL_BACKE
 EMAIL_HOST = get_env_variable('EMAIL_HOST', '/campusnavigation/EMAIL_HOST')
 EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '/campusnavigation/EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '/campusnavigation/EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL=get_env_variable('DEFAULT_FROM_EMAIL', '/campusnavigation/DEFAULT_FROM_EMAIL')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # Logging 
+print("\nEnvironment Variables")
 print(f"DEBUG: {DEBUG}")
 print(f"SECRET_KEY: {SECRET_KEY}")
 print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
+print(f"EMAIL_HOST: {EMAIL_HOST}")
+print("\n")
 boto3.set_stream_logger('', logging.DEBUG)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -179,13 +183,8 @@ MAGICLINK_LOGIN_TEMPLATE_NAME = 'magiclink/login.html'
 MAGICLINK_LOGIN_SENT_TEMPLATE_NAME = 'magiclink/login_sent.html'
 MAGICLINK_LOGIN_FAILED_TEMPLATE_NAME = 'magiclink/login_failed.html'
 
+LOGIN_URL = '/auth/login/'
 LOGIN_REDIRECT_URL = '/map/'
-MAGICLINK_EMAIL_STYLES = {
-    'background-colour': '#ffffff',
-    'main-text-color': '#000000',
-    'button-background-color': '#ffbd00',
-    'button-text-color': '#ffffff',
-}
 
 MAGICLINK_AUTH_TIMEOUT = 300
 MAGICLINK_IGNORE_EMAIL_CASE = True
@@ -199,3 +198,5 @@ MAGICLINK_ALLOW_SUPERUSER_LOGIN = True
 MAGICLINK_ALLOW_STAFF_LOGIN = True
 MAGICLINK_VERIFY_INCLUDE_EMAIL = False
 LOGIN_SENT_REDIRECT = 'magiclink:login_sent'
+
+MAGICLINK_EMAIL_TEMPLATE_NAME_HTML = 'magiclink/login_email.html'
