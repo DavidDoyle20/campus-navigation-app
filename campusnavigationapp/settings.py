@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from dotenv import load_dotenv
 import boto3
+import logging
 from pathlib import Path
 
 load_dotenv()
@@ -48,6 +49,12 @@ EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '/campusnavigation/EMAIL_H
 EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '/campusnavigation/EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+# Logging 
+print(f"DEBUG: {DEBUG}")
+print(f"SECRET_KEY: {SECRET_KEY}")
+print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
+boto3.set_stream_logger('', logging.DEBUG)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
