@@ -20,7 +20,7 @@ load_dotenv()
 
 # Set variables
 def get_ssm_parameter(param_name, default=None):
-    ssm = boto3.client('ssm')
+    ssm = boto3.client('ssm', region_name='us-east-2')
     try:
         response = ssm.get_parameter(Name=param_name, WithDecryption=True)
         return response['Parameter']['Value']
