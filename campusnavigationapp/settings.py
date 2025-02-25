@@ -40,25 +40,36 @@ def get_env_variable(var_name, ssm_path=None):
     
     return None
 
-
 # Access variables
 DEBUG = get_env_variable('DEBUG', '/campusnavigation/DEBUG') == 'True'
 SECRET_KEY = get_env_variable('SECRET_KEY', '/campusnavigation/SECRET_KEY')
 EMAIL_BACKEND = get_env_variable('EMAIL_BACKEND', '/campusnavigation/EMAIL_BACKEND')
-EMAIL_HOST = get_env_variable('EMAIL_HOST', '/campusnavigation/EMAIL_HOST')
-EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', '/campusnavigation/EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = get_env_variable('EMAIL_HOST_PASSWORD', '/campusnavigation/EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL= get_env_variable('DEFAULT_FROM_EMAIL', '/campusnavigation/DEFAULT_FROM_EMAIL')
 DATABASE_URL= get_env_variable('DATABASE_URL', '/campusnavigation/DATABASE_URL')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+if not DEBUG:
+    sts_client = boto3.client('sts')
+    assumed_role_object = sts_client.assume_role(
+        RoleArn=get_ssm_parameter('/campusnavigationapp/AWS_ROLE_ARN'),
+        RoleSessionName="CampusNavigationApp_Session"
+    )
+    credentials = assumed_role_object['Credentials']
+    AWS_SES_CONFIGURATION_SET = 'CampusNavigationAppAccounts'
+    AWS_ACCESS_KEY_ID = credentials['AccessKeyId']
+    AWS_SECRET_ACCESS_KEY = credentials['SecretAccessKey']
+    AWS_SESSION_TOKEN = credentials['SessionToken']
+    AWS_SES_REGION_NAME = 'us-east-2'
+    AWS_SES_REGION_ENDPOINT = 'email-smtp.us-east-2.amazonaws.com'
+    USE_SES_V2 = True
 
 # Logging 
 print("\nEnvironment Variables")
 print(f"DEBUG: {DEBUG}")
 print(f"SECRET_KEY: {SECRET_KEY}")
 print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
-print(f"EMAIL_HOST: {EMAIL_HOST}")
+print(f"EMAIL_HOST: {AWS_ACCESS_KEY_ID}")
 print(f"DATABASE_URL: {DATABASE_URL}")
 print("\n")
 boto3.set_stream_logger('', logging.DEBUG)
