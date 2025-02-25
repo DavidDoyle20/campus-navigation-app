@@ -50,11 +50,11 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 if not DEBUG:
-    AWS_SES_CONFIGURATION_SET = 'CampusNavigationAppAccounts'
     AWS_SES_REGION_NAME = 'us-east-2'
-    AWS_SES_REGION_ENDPOINT = 'email-smtp.us-east-2.amazonaws.com'
+    AWS_SES_REGION_ENDPOINT = 'email.us-east-2.amazonaws.com'
     USE_SES_V2 = True
     AWS_SES_TIMEOUT = 30
+    AWS_SES_REQUEST_TIMEOUT = 30
     AWS_SES_AUTO_THROTTLE = 0.5
 
 # Logging 
