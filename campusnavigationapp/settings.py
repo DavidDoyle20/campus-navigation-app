@@ -50,16 +50,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 if not DEBUG:
-    sts_client = boto3.client('sts')
-    assumed_role_object = sts_client.assume_role(
-        RoleArn=get_ssm_parameter('/campusnavigation/AWS_ROLE_ARN'),
-        RoleSessionName="CampusNavigationApp_Session"
-    )
-    credentials = assumed_role_object['Credentials']
     AWS_SES_CONFIGURATION_SET = 'CampusNavigationAppAccounts'
-    AWS_ACCESS_KEY_ID = credentials['AccessKeyId']
-    AWS_SECRET_ACCESS_KEY = credentials['SecretAccessKey']
-    AWS_SESSION_TOKEN = credentials['SessionToken']
     AWS_SES_REGION_NAME = 'us-east-2'
     AWS_SES_REGION_ENDPOINT = 'email-smtp.us-east-2.amazonaws.com'
     USE_SES_V2 = True
