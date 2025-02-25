@@ -50,13 +50,12 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 if not DEBUG:
-    EMAIL_HOST_USER = get_ssm_parameter('/campusnavigation/EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = get_ssm_parameter('/campusnavigation/EMAIL_HOST_PASSWORD')
     AWS_SES_CONFIGURATION_SET = 'CampusNavigationAppAccounts'
     AWS_SES_REGION_NAME = 'us-east-2'
     AWS_SES_REGION_ENDPOINT = 'email-smtp.us-east-2.amazonaws.com'
     USE_SES_V2 = True
-    EMAIL_TIMEOUT = 30
+    AWS_SES_TIMEOUT = 30
+    AWS_SES_AUTO_THROTTLE = 0.5
 
 # Logging 
 print("\nEnvironment Variables")
