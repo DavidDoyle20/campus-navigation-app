@@ -47,11 +47,11 @@ const gl = new maplibregl.Map({
     "https://api.maptiler.com/maps/openstreetmap/style.json?key=UOLh4Ktc21SMniW0v30i",
   center: [-87.882799, 43.077622],
   zoom: 17,
-  minZoom: 16,
-  maxZoom: 22,
+  minZoom: 17,
+  maxZoom: 20,
 });
 const indoorEqual = new CustomIndoorEqual(gl, {
-  apiKey: "iek_lkFHtGmMEwKkwk4wAiWpGb49RFNI",
+  url: 'https://osm.uwmnav.dedyn.io',
 });
 gl.addControl(indoorEqual);
 gl.dragRotate.disable();
