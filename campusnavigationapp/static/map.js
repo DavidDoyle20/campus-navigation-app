@@ -12,7 +12,6 @@ class CustomIndoorEqual extends IndoorEqual {
     if (level === this.level) {
       marker.addTo(this.map);
     }
-
   }
 
   toggleMarkers(level) {
@@ -52,7 +51,7 @@ const gl = new maplibregl.Map({
   maxZoom: 20,
 });
 const indoorEqual = new CustomIndoorEqual(gl, {
-  url: "https://osm.uwmnav.dedyn.io",
+  url: 'https://osm.uwmnav.dedyn.io',
 });
 gl.addControl(indoorEqual);
 gl.dragRotate.disable();
@@ -118,39 +117,30 @@ function handleMarkerCreation(e) {
     return;
   }
 
-  // the longitude and latitude from the event
-  console.log(e.lngLat);
-
-  // Creates and adds marker to the map
   let marker = new maplibregl.Marker({
     color: "#FF0000",
   })
     .setLngLat(e.lngLat)
     .addTo(gl);
 
-  // Defines the html for the remove marker button
   const popupContent = document.createElement("div");
   popupContent.innerHTML = `
     <button id="remove-marker">Remove Marker</button>
   `;
 
-  // Adds the popup to the new marker
   const popup = new maplibregl.Popup().setDOMContent(popupContent);
   marker.setPopup(popup);
 
-  // Adds an event listener to the marker
   popupContent.querySelector("#remove-marker").addEventListener("click", () => {
     marker.remove();
     indoorEqual.removeMarker(marker, currentLevel);
   });
 
-  // Adds an onlick event listener for the popup
   marker.on("click", (e) => marker.togglePopup());
   indoorEqual.addMarker(marker, currentLevel);
 }
 gl.on("contextmenu", handleMarkerCreation);
 
-// This code makes interaction with the markers better on mobile
 function handleTouchStart(e) {
   // Prevent action if there are multiple touches
   if (e.originalEvent.touches.length > 1) {
@@ -180,134 +170,24 @@ indoorEqual.on("levelchange", (level) => {
   console.log(`Level changed to ${level}`);
 });
 
-// <!-- get the users current location. display it as a marker on the map. -->
-navigator.geolocation.watchPosition(
-  currentLocationSuccess,
-  currentLocationError
-);
 
-let currentLocationMarker;
+<!-- get the users current location. display it as a marker on the map. -->
+navigator.geolocation.watchPosition(currentLocationSuccess,currentLocationError);
 
-function currentLocationSuccess(pos) {
-  if (currentLocationMarker) {
-    currentLocationMarker.remove();
-  }
+function currentLocationSuccess(pos){
   const lat = pos.coords.latitude;
   const lng = pos.coords.longitude;
 
-  currentLocationMarker = new maplibregl.Marker();
-  currentLocationMarker.setLngLat([lng, lat]);
-  currentLocationMarker.addTo(gl);
+  let marker = new maplibregl.Marker();
+  marker.setLngLat([lng,lat]);
+  marker.addTo(gl);
 }
-function currentLocationError(err) {
-  if (err.code === 1) {
-    // <!-- user declined geolocation -->
-  } else {
-    // <!-- could not get geolocation -->
+function currentLocationError(err){
+  if (err.code === 1){
+    <!-- user declined geolocation -->
+  }
+  else
+  {
+    <!-- could not get geolocation -->
   }
 }
-
-//open route service section:
-//This is the basic implimintation of ors, takes 2 fixed points, calls the openroute with url.
-//if route is found, process the data, and call display route which is passed the returned jsom data
-//maplibregl uses geoJSOM to process routes, so need to convert the JSOM to geoJSOM first
-//then we update or add a srouce, and a layer to the map
-const getDirectionsButton = document.getElementById('getDirectionsButton');
-
-//key: 5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b
-const orsApiKey = '5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b';
-
-//two points
-const markerA = [43.0752889, -87.8862879];
-const markerB = [43.075514, -87.884123];
-//places a new marker at the start and end points for referance. we will want to use the markers we put down later.
-new maplibregl.Marker().setLngLat(markerA.slice().reverse()).addTo(gl);
-new maplibregl.Marker().setLngLat(markerB.slice().reverse()).addTo(gl);
-
-async function getDirections(start, end) {
-      //send start and end points to ors server
-      const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}`;
-
-      try {
-        //gets server response
-        const response = await fetch(url);
-        //gets the json data from the response
-        const data = await response.json();
-
-        //as long as there is a route to take we can process the data
-        if (data.features && data.features.length > 0) {
-
-          //splits data up into three usefull fileds
-          const route = data.features[0].geometry.coordinates; //the array of points taken from a to b
-          const distance = data.features[0].properties.summary.distance; //total distance covered
-          const duration = data.features[0].properties.summary.duration; //estimated time of travel
-
-          //pushes to the console to read, can remove after debugging.
-          console.log('Route:', route);
-          console.log('Distance:', distance, 'meters');
-          console.log('Duration:', duration, 'seconds');
-
-          //update the map to show the routing.
-          displayRouteOnMap(route);
-
-          //returns the three broken up sections of data as an array.
-          return { route, distance, duration };
-        } else {
-          console.error('No route found.');
-          return null;
-        }
-      } catch (error) {
-        console.error('Error fetching directions:', error);
-        return null;
-      }
-    }
-
-    //updates map to show the routing
-    function displayRouteOnMap(routeCoordinates) {
-    //since ors returns jsom and maplibregl uses geoJSOM we need to convert it
-      const routeGeoJsonData = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: routeCoordinates,
-        },
-      };
-
-      //checks if we made a rout already, updates it with new geoJSON data, otherwise makes new route
-      if (gl.getSource('route')) {
-        gl.getSource('route').setData(routeGeoJsonData);
-      } else {
-        //to add a route we need a source, the geojson data, and a layer, which contains the line
-        gl.addSource('route', {
-          type: 'geojson',
-          data: routeGeoJsonData,
-        });
-
-        gl.addLayer({
-          id: 'route',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-          paint: {
-            'line-color': '#3887be',
-            'line-width': 5,
-          },
-        });
-      }
-
-      //zooms in/out the map to fit the full route in the screen.
-      const bounds = routeCoordinates.reduce(
-        (bounds, coord) => bounds.extend(coord),
-        new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
-      );
-      gl.fitBounds(bounds, { padding: 20 });
-    }
-
-    //todo: need to update map.html to add a button to grab route. atm I have just hijacked the bookmark button to run the route functions.
-    getDirectionsButton.addEventListener('click', () => {
-      getDirections(markerA, markerB)
-    });
