@@ -51,7 +51,7 @@ const gl = new maplibregl.Map({
   maxZoom: 20,
 });
 const indoorEqual = new CustomIndoorEqual(gl, {
-  url: 'https://osm.uwmnav.dedyn.io',
+  url: "https://osm.uwmnav.dedyn.io",
 });
 gl.addControl(indoorEqual);
 gl.dragRotate.disable();
@@ -117,30 +117,39 @@ function handleMarkerCreation(e) {
     return;
   }
 
+  // the longitude and latitude from the event
+  console.log(e.lngLat);
+
+  // Creates and adds marker to the map
   let marker = new maplibregl.Marker({
     color: "#FF0000",
   })
     .setLngLat(e.lngLat)
     .addTo(gl);
 
+  // Defines the html for the remove marker button
   const popupContent = document.createElement("div");
   popupContent.innerHTML = `
     <button id="remove-marker">Remove Marker</button>
   `;
 
+  // Adds the popup to the new marker
   const popup = new maplibregl.Popup().setDOMContent(popupContent);
   marker.setPopup(popup);
 
+  // Adds an event listener to the marker
   popupContent.querySelector("#remove-marker").addEventListener("click", () => {
     marker.remove();
     indoorEqual.removeMarker(marker, currentLevel);
   });
 
+  // Adds an onlick event listener for the popup
   marker.on("click", (e) => marker.togglePopup());
   indoorEqual.addMarker(marker, currentLevel);
 }
 gl.on("contextmenu", handleMarkerCreation);
 
+// This code makes interaction with the markers better on mobile
 function handleTouchStart(e) {
   // Prevent action if there are multiple touches
   if (e.originalEvent.touches.length > 1) {
@@ -170,24 +179,29 @@ indoorEqual.on("levelchange", (level) => {
   console.log(`Level changed to ${level}`);
 });
 
+// <!-- get the users current location. display it as a marker on the map. -->
+navigator.geolocation.watchPosition(
+  currentLocationSuccess,
+  currentLocationError
+);
 
-<!-- get the users current location. display it as a marker on the map. -->
-navigator.geolocation.watchPosition(currentLocationSuccess,currentLocationError);
+let lastMarker;
 
-function currentLocationSuccess(pos){
+function currentLocationSuccess(pos) {
+  if (lastMarker) {
+    lastMarker.remove();
+  }
   const lat = pos.coords.latitude;
   const lng = pos.coords.longitude;
 
-  let marker = new maplibregl.Marker();
-  marker.setLngLat([lng,lat]);
-  marker.addTo(gl);
+  lastMarker = new maplibregl.Marker();
+  lastMarker.setLngLat([lng, lat]);
+  lastMarker.addTo(gl);
 }
-function currentLocationError(err){
-  if (err.code === 1){
-    <!-- user declined geolocation -->
-  }
-  else
-  {
-    <!-- could not get geolocation -->
+function currentLocationError(err) {
+  if (err.code === 1) {
+    // <!-- user declined geolocation -->
+  } else {
+    // <!-- could not get geolocation -->
   }
 }
