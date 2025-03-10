@@ -2,6 +2,8 @@ body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    font-size: 100%; 
+    font-family: 'Roboto'; 
 }
 #map-container {
     position: relative;
@@ -88,3 +90,96 @@ body {
     opacity: 0;
     visibility: hidden;
 }
+
+.maplibregl-popup-content {
+    border-radius: 15px; /* Adjust radius as needed */
+    overflow: hidden; /* Prevent content from spilling out of rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Optional: Add a shadow for better visuals */
+  }
+
+.popup-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    /* background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); */
+}
+
+.popup-buttons button {
+    font-family: inherit;
+    display: block; 
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    text-align: center;
+    background-color: #007BFF; /* Default button color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .popup-buttons button:hover {
+    background-color: #0056b3; /* Darker blue */
+  }
+  
+  /* Specific styles for individual buttons (optional) */
+  #remove-marker {
+    background-color: #FF0000; /* Red for delete */
+  }
+  
+  #remove-marker:hover {
+    background-color: #cc0000; /* Darker red */
+  }
+  
+  #set-start {
+    background-color: #28a745; /* Green for start */
+  }
+  
+  #set-start:hover {
+    background-color: #218838; /* Darker green */
+  }
+  
+  #set-destination {
+    background-color: #ffc107; /* Yellow for destination */
+  }
+  
+  #set-destination:hover {
+    background-color: #e0a800; /* Darker yellow */
+  }
+
+  #start-navigation {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    padding: 1.3em 3em;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #000;
+    background-color: #fff;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+    z-index: 9000;
+  }
+  
+  #start-navigation:hover {
+    background-color: #ffbd00;
+    box-shadow: 0px 15px 20px rgba(229, 186, 46, 0.4);
+    color: #fff;
+    transform: translateY(-7px);
+    z-index: 9000;
+  }
+  
+  #start-navigation:active {
+    transform: translateY(-1px);
+    z-index: 9000;
+  }

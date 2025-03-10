@@ -2,6 +2,8 @@ class CustomIndoorEqual extends IndoorEqual {
   constructor(map, options) {
     super(map, options);
     this.markers = {};
+    this.start = null;
+    this.destination = null;
   }
 
   addMarker(marker, level) {
@@ -15,7 +17,6 @@ class CustomIndoorEqual extends IndoorEqual {
   }
 
   toggleMarkers(level) {
-    //console.log(this.markers);
     Object.keys(this.markers).forEach((markerLevel) => {
       this.markers[markerLevel].forEach((marker) => {
         if (markerLevel === level) {
@@ -40,6 +41,154 @@ class CustomIndoorEqual extends IndoorEqual {
     this._emitLevelChange();
   }
 }
+class TypedMarker extends maplibregl.Marker {
+  constructor(options = {}, type = "none") {
+    const colors = {
+      start: "#4CAF50",
+      end: "#ffc107",
+      none: "#2196F3",
+      geo: "#80b0ff",
+      geoStart: "#4CAF50",
+    };
+
+    const markerElement = document.createElement("div");
+    const svgContainer = document.createElement("div");
+
+    markerElement.style.width = "48px";
+    markerElement.style.height = "48px";
+
+    fetch(window.iconUrl)
+      .then((response) => response.text())
+      .then((svg) => {
+        svgContainer.innerHTML = svg;
+        const svgElement = svgContainer.querySelector("svg");
+        if (svgElement) {
+          svgElement.style.width = "100%";
+          svgElement.style.height = "100%";
+          svgElement.style.fill = colors[type] || colors.none;
+        }
+      });
+
+    markerElement.appendChild(svgContainer);
+
+    super({
+      ...options,
+      element: markerElement,
+    });
+
+    this._type = type;
+    this._createPopup();
+  }
+
+  setType(newType) {
+    const colors = {
+      start: "#4CAF50",
+      end: "#ffc107",
+      none: "#2196F3",
+      geo: "#80b0ff",
+      geoStart: "#4CAF50",
+    };
+
+    if (["start", "end", "none", "geo", "geoStart"].includes(newType)) {
+      // if there is already a start marker update it
+      if (newType === "start" && indoorEqual.start) {
+        if (indoorEqual.start._type === "geoStart") {
+          indoorEqual.start.setType("geo");
+        } else {
+          indoorEqual.start.setType("none");
+        }
+      }
+      if (newType === "end" && indoorEqual.destination) {
+        indoorEqual.destination.setType("none");
+      }
+      if (this._type === "geo" && newType === "start") {
+        this._type = "geoStart";
+        this._updateColor(colors["geoStart"]);
+        indoorEqual.start = this;
+      } else {
+        this._type = newType;
+        this._updateColor(colors[newType]);
+      }
+      if (this._type === "start") {
+        indoorEqual.start = this;
+      }
+      if (this._type === "end") {
+        indoorEqual.destination = this;
+      }
+      updateStartButtonVisibility();
+      this._createPopup();
+    }
+    return this;
+  }
+
+  _updateColor(newColor) {
+    const svgElement = this.getElement().querySelector("svg");
+    if (svgElement) {
+      svgElement.style.fill = newColor;
+    }
+  }
+
+  _createPopup() {
+    const popupContent = document.createElement("div");
+    let popupHTML = "";
+
+    switch (this._type) {
+      case "start":
+        popupHTML = `<button id="remove-marker">Remove Marker</button><button id="set-dest">Set Destination</button>`;
+        break;
+      case "end":
+        popupHTML = `<button id="remove-marker">Remove Marker</button><button id="set-start">Set Start</button>`;
+        break;
+      case "geoStart":
+        popupHTML = `<button id="remove-start">Remove Start</button>`;
+        break;
+      case "geo":
+        popupHTML = `<button id="set-start">Set Start</button>`;
+        break;
+      default:
+        popupHTML = `<button id="remove-marker">Remove Marker</button>
+          <button id="set-start">Set Start</button>
+          <button id="set-destination">Set Destination</button>`;
+    }
+
+    popupContent.innerHTML = `<div class="popup-buttons">${popupHTML}</div>`;
+
+    const popupOptions = {
+      closeButton: false,
+      className: "custom-popup",
+    };
+    // Update existing popup or create new one
+    const existingPopup = this.getPopup();
+    if (existingPopup) {
+      existingPopup.setDOMContent(popupContent);
+    } else {
+      this.setPopup(
+        new maplibregl.Popup(popupOptions).setDOMContent(popupContent)
+      );
+    }
+
+    // Add event listeners
+    popupContent.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        switch (e.target.id) {
+          case "set-start":
+            this.setType("start");
+            break;
+          case "set-destination":
+            this.setType("end");
+            break;
+          case "remove-marker":
+            this.remove();
+            break;
+          case "remove-start":
+            this.setType("geo");
+            break;
+        }
+        this.getPopup()?.remove();
+      });
+    });
+  }
+}
 
 const gl = new maplibregl.Map({
   container: "map",
@@ -49,6 +198,7 @@ const gl = new maplibregl.Map({
   zoom: 17,
   minZoom: 17,
   maxZoom: 20,
+  attributionControl: false,
 });
 const indoorEqual = new CustomIndoorEqual(gl, {
   url: "https://osm.uwmnav.dedyn.io",
@@ -90,6 +240,7 @@ const toggleButton = document.getElementById("toggle-sidebar");
 const mapOverlay = document.getElementById("map-overlay");
 const hamburgerIcon = document.getElementById("hamburger-icon");
 const closeIcon = document.getElementById("close-icon");
+const startButton = document.getElementById("start-navigation");
 
 toggleButton.addEventListener("click", () => {
   sidebar.classList.toggle("open");
@@ -104,48 +255,83 @@ toggleButton.addEventListener("click", () => {
   }
 });
 
+// Alter to work with navigation api
+startButton.addEventListener("click", async () => {
+  console.log(
+    "Start: ",
+    indoorEqual.start._lngLat,
+    "\nDest: ",
+    indoorEqual.destination._lngLat
+  );
+});
+// <!-- get the users current location. display it as a marker on the map. -->
+// TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
+navigator.geolocation.watchPosition(
+  currentLocationSuccess,
+  currentLocationError
+);
+
+let lastMarker;
+
+function currentLocationSuccess(pos) {
+  console.log(lastMarker);
+  if (lastMarker) {
+    lastMarker.remove();
+  }
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+
+  lastMarker = new TypedMarker({}, "geo").setLngLat([lng, lat]).addTo(gl);
+
+  indoorEqual.addMarker(lastMarker, 0);
+}
+function currentLocationError(err) {
+  if (err.code === 1) {
+    // <!-- user declined geolocation -->
+    console.log("Geolocation declined by user");
+  } else {
+    // <!-- could not get geolocation -->
+    console.log("Could not getgeolocation. Does your device support it?");
+  }
+}
+
 // Marker functionality
-// TODO: Add options in the popup menu (e.g. set start/end, copy coordinates, change floor, etc.)
+// TODO: Add options in the popup menu (e.g. copy coordinates, change floor, etc.)
 let currentLevel = 0;
 let longPressTimer;
+
+let currentMarkers = [];
+const MAX_MARKERS = 2;
+
 const LONG_PRESS_DURATION = 500; // Milliseconds
 
+// Function to update the visibility of the Start button
+function updateStartButtonVisibility() {
+  const startButton = document.getElementById("start-navigation");
+  if (indoorEqual.start && indoorEqual.destination) {
+    startButton.style.display = "block";
+  } else {
+    startButton.style.display = "none";
+  }
+}
+
 function handleMarkerCreation(e) {
+  if (currentMarkers.length >= MAX_MARKERS) {
+    const [oldestMarker, oldestMarkerLevel] = currentMarkers.shift(); // remove oldest marker
+    oldestMarker.remove();
+    indoorEqual.removeMarker(oldestMarker, oldestMarkerLevel);
+  }
+
   // Ensure we have valid coordinates
   if (!e.lngLat) {
     console.warn("No lngLat available from the event.");
     return;
   }
 
-  // the longitude and latitude from the event
-  console.log(e.lngLat);
+  let marker = new TypedMarker().setLngLat(e.lngLat).addTo(gl);
 
-  // Creates and adds marker to the map
-  let marker = new maplibregl.Marker({
-    color: "#FF0000",
-  })
-    .setLngLat(e.lngLat)
-    .addTo(gl);
-
-  // Defines the html for the remove marker button
-  const popupContent = document.createElement("div");
-  popupContent.innerHTML = `
-    <button id="remove-marker">Remove Marker</button>
-  `;
-
-  // Adds the popup to the new marker
-  const popup = new maplibregl.Popup().setDOMContent(popupContent);
-  marker.setPopup(popup);
-
-  // Adds an event listener to the marker
-  popupContent.querySelector("#remove-marker").addEventListener("click", () => {
-    marker.remove();
-    indoorEqual.removeMarker(marker, currentLevel);
-  });
-
-  // Adds an onlick event listener for the popup
-  marker.on("click", (e) => marker.togglePopup());
   indoorEqual.addMarker(marker, currentLevel);
+  currentMarkers.push([marker, currentLevel]);
 }
 gl.on("contextmenu", handleMarkerCreation);
 
@@ -178,30 +364,3 @@ indoorEqual.on("levelchange", (level) => {
   currentLevel = level;
   console.log(`Level changed to ${level}`);
 });
-
-// <!-- get the users current location. display it as a marker on the map. -->
-navigator.geolocation.watchPosition(
-  currentLocationSuccess,
-  currentLocationError
-);
-
-let lastMarker;
-
-function currentLocationSuccess(pos) {
-  if (lastMarker) {
-    lastMarker.remove();
-  }
-  const lat = pos.coords.latitude;
-  const lng = pos.coords.longitude;
-
-  lastMarker = new maplibregl.Marker();
-  lastMarker.setLngLat([lng, lat]);
-  lastMarker.addTo(gl);
-}
-function currentLocationError(err) {
-  if (err.code === 1) {
-    // <!-- user declined geolocation -->
-  } else {
-    // <!-- could not get geolocation -->
-  }
-}

@@ -30,7 +30,11 @@
             <button class="second-button">
                 <i class="fa-regular fa-bookmark"></i>
             </button>
+            <button id="start-navigation" style="display: none;">Start Navigation</button>
         </div>
+        <script>
+            window.iconUrl = "{% static 'marker-svgrepo-com.svg' %}";
+        </script>
         <script src="{% static 'map.js' %}"></script>
     </body>
 </html>
