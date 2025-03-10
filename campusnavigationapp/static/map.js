@@ -311,9 +311,5 @@ async function getDirections(start, end) {
 
     //todo: need to update map.html to add a button to grab route. atm I have just hijacked the bookmark button to run the route functions.
     getDirectionsButton.addEventListener('click', () => {
-      getDirections(markerA, markerB).then((directions) => {
-        if (directions) {
-          // Add markers for start and end points
-        }
-      });
+      getDirections(markerA, markerB)
     });
