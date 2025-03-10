@@ -16,20 +16,25 @@
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/maplibre-gl-indoorequal@latest/dist/maplibre-gl-indoorequal.umd.min.js"></script>
 
+
+
     <title>Campus Navigation App</title>
 </head>
     <body>
         <div id="map-container">
             <div id="map-overlay"></div>
             <div id="map"></div>
+
+
             <div id="sidebar"></div>
             <button id="toggle-sidebar" class="sidebar-toggle">
                 <i class="fas fa-bars" id="hamburger-icon"></i>
                 <i class="fas fa-times" id="close-icon" style="display: none;"></i>
             </button>
-            <button class="second-button">
+            <button class="second-button" id = "getDirectionsButton">
                 <i class="fa-regular fa-bookmark"></i>
             </button>
+
         </div>
         <script src="{% static 'map.js' %}"></script>
     </body>

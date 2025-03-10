@@ -1,19 +1,18 @@
 import logging
 
+from django.conf import settings as django_settings
+from django.contrib.auth import logout
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.forms import ValidationError
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.conf import settings as django_settings
-from django.contrib.auth.models import User
-from django.contrib.auth import logout
+from django.utils.decorators import method_decorator
 from django.views import View
-from magiclink.views import Login
+from django.views.decorators.csrf import csrf_protect
 from magiclink.forms import LoginForm
 from magiclink.helpers import get_or_create_user, create_magiclink, MagicLinkError, get_url_path
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.mixins import UserPassesTestMixin
+from magiclink.views import Login
 
 log = logging.getLogger(__name__)
 
