@@ -4,6 +4,7 @@ class CustomIndoorEqual extends IndoorEqual {
     this.markers = {};
     this.start = null;
     this.destination = null;
+    this.location = null;
   }
 
   addMarker(marker) {
@@ -291,23 +292,19 @@ navigator.geolocation.watchPosition(
   currentLocationError
 );
 
-let lastMarker;
-
 // called every time a new location is received
 function currentLocationSuccess(pos) {
-  let markerType = "geo"
-  if (lastMarker) {
-    if (lastMarker._type === "geoStart") {
-      markerType = "geoStart"
-    }
-    indoorEqual.removeMarker(lastMarker, lastMarker._level)
-  }
   const lat = pos.coords.latitude;
   const lng = pos.coords.longitude;
 
-  lastMarker = new TypedMarker({}, markerType).setLngLat([lng, lat]).addTo(gl);
-
-  indoorEqual.addMarker(lastMarker, 0);
+  if (indoorEqual.location) {
+    indoorEqual.location.setLngLat([lng, lat])
+  } else {
+    // Initial marker creation
+    const newMarker = new TypedMarker({}, "geo", 0).setLngLat([lng, lat]).addTo(gl);
+    indoorEqual.addMarker(newMarker);
+    indoorEqual.location = newMarker
+  }
 }
 
 
