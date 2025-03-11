@@ -6,7 +6,8 @@ class CustomIndoorEqual extends IndoorEqual {
     this.destination = null;
   }
 
-  addMarker(marker, level) {
+  addMarker(marker) {
+    const level = marker._level
     if (!this.markers[level]) {
       this.markers[level] = [];
     }
@@ -28,10 +29,19 @@ class CustomIndoorEqual extends IndoorEqual {
     });
   }
 
-  removeMarker(marker, level) {
+  removeMarker(marker) {
+    const level = marker._level
     if (this.markers[level]) {
+      if (this.start === marker) {
+        this.start = null;
+      }
+      if (this.destination === marker) {
+        this.destination = null;
+      }
       this.markers[level] = this.markers[level].filter((m) => m !== marker);
+      marker.remove();
     }
+    updateStartButtonVisibility();
   }
 
   setLevel(level) {
@@ -42,7 +52,7 @@ class CustomIndoorEqual extends IndoorEqual {
   }
 }
 class TypedMarker extends maplibregl.Marker {
-  constructor(options = {}, type = "none") {
+  constructor(options = {}, type = "none", level = 0) {
     const colors = {
       start: "#4CAF50",
       end: "#ffc107",
@@ -77,6 +87,7 @@ class TypedMarker extends maplibregl.Marker {
     });
 
     this._type = type;
+    this._level = level;
     this._createPopup();
   }
 
@@ -89,7 +100,15 @@ class TypedMarker extends maplibregl.Marker {
       geoStart: "#4CAF50",
     };
 
+
     if (["start", "end", "none", "geo", "geoStart"].includes(newType)) {
+      // update start or destination if the type was changed
+      if (this._type === "start" || this._type === "geoStart") {
+        indoorEqual.start = null;
+      }
+      if (this._type === "end") {
+        indoorEqual.destination = null;
+      }
       // if there is already a start marker update it
       if (newType === "start" && indoorEqual.start) {
         if (indoorEqual.start._type === "geoStart") {
@@ -98,6 +117,7 @@ class TypedMarker extends maplibregl.Marker {
           indoorEqual.start.setType("none");
         }
       }
+      // Sets the type of the previous end and start variables to none or geo
       if (newType === "end" && indoorEqual.destination) {
         indoorEqual.destination.setType("none");
       }
@@ -115,7 +135,6 @@ class TypedMarker extends maplibregl.Marker {
       if (this._type === "end") {
         indoorEqual.destination = this;
       }
-      updateStartButtonVisibility();
       this._createPopup();
     }
     return this;
@@ -178,7 +197,7 @@ class TypedMarker extends maplibregl.Marker {
             this.setType("end");
             break;
           case "remove-marker":
-            this.remove();
+            indoorEqual.removeMarker(this);
             break;
           case "remove-start":
             this.setType("geo");
@@ -187,6 +206,7 @@ class TypedMarker extends maplibregl.Marker {
         this.getPopup()?.remove();
       });
     });
+    updateStartButtonVisibility();
   }
 }
 
@@ -273,18 +293,24 @@ navigator.geolocation.watchPosition(
 
 let lastMarker;
 
+// called every time a new location is received
 function currentLocationSuccess(pos) {
-  console.log(lastMarker);
+  let markerType = "geo"
   if (lastMarker) {
-    lastMarker.remove();
+    if (lastMarker._type === "geoStart") {
+      markerType = "geoStart"
+    }
+    indoorEqual.removeMarker(lastMarker, lastMarker._level)
   }
   const lat = pos.coords.latitude;
   const lng = pos.coords.longitude;
 
-  lastMarker = new TypedMarker({}, "geo").setLngLat([lng, lat]).addTo(gl);
+  lastMarker = new TypedMarker({}, markerType).setLngLat([lng, lat]).addTo(gl);
 
   indoorEqual.addMarker(lastMarker, 0);
 }
+
+
 function currentLocationError(err) {
   if (err.code === 1) {
     // <!-- user declined geolocation -->
@@ -318,7 +344,6 @@ function updateStartButtonVisibility() {
 function handleMarkerCreation(e) {
   if (currentMarkers.length >= MAX_MARKERS) {
     const [oldestMarker, oldestMarkerLevel] = currentMarkers.shift(); // remove oldest marker
-    oldestMarker.remove();
     indoorEqual.removeMarker(oldestMarker, oldestMarkerLevel);
   }
 
@@ -328,9 +353,9 @@ function handleMarkerCreation(e) {
     return;
   }
 
-  let marker = new TypedMarker().setLngLat(e.lngLat).addTo(gl);
+  let marker = new TypedMarker({}, "none", currentLevel).setLngLat(e.lngLat).addTo(gl);
 
-  indoorEqual.addMarker(marker, currentLevel);
+  indoorEqual.addMarker(marker);
   currentMarkers.push([marker, currentLevel]);
 }
 gl.on("contextmenu", handleMarkerCreation);
@@ -362,5 +387,5 @@ gl.on("touchmove", handleTouchMove);
 // Listen for level changes
 indoorEqual.on("levelchange", (level) => {
   currentLevel = level;
-  console.log(`Level changed to ${level}`);
+  console.log(`Level changed to ${currentLevel}`);
 });
