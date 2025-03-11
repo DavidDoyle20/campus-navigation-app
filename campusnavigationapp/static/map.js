@@ -8,7 +8,7 @@ class CustomIndoorEqual extends IndoorEqual {
   }
 
   addMarker(marker) {
-    const level = marker._level
+    const level = marker._level;
     if (!this.markers[level]) {
       this.markers[level] = [];
     }
@@ -31,7 +31,7 @@ class CustomIndoorEqual extends IndoorEqual {
   }
 
   removeMarker(marker) {
-    const level = marker._level
+    const level = marker._level;
     if (this.markers[level]) {
       if (this.start === marker) {
         this.start = null;
@@ -52,16 +52,18 @@ class CustomIndoorEqual extends IndoorEqual {
     this._emitLevelChange();
   }
 }
-class TypedMarker extends maplibregl.Marker {
-  constructor(options = {}, type = "none", level = 0) {
-    const colors = {
-      start: "#4CAF50",
-      end: "#ffc107",
-      none: "#2196F3",
-      geo: "#80b0ff",
-      geoStart: "#4CAF50",
-    };
 
+class TypedMarker extends maplibregl.Marker {
+  static VALID_TYPES = new Set(["start", "end", "none", "geo", "geoStart"]);
+  static TYPE_COLORS = {
+    start: "#4CAF50",
+    end: "#ffc107",
+    none: "#2196F3",
+    geo: "#80b0ff",
+    geoStart: "#4CAF50",
+  };
+
+  constructor(options = {}, type = "none", level = 0) {
     const markerElement = document.createElement("div");
     const svgContainer = document.createElement("div");
 
@@ -76,7 +78,8 @@ class TypedMarker extends maplibregl.Marker {
         if (svgElement) {
           svgElement.style.width = "100%";
           svgElement.style.height = "100%";
-          svgElement.style.fill = colors[type] || colors.none;
+          svgElement.style.fill =
+            TypedMarker.TYPE_COLORS[type] || TypedMarker.TYPE_COLORS["none"];
         }
       });
 
@@ -93,52 +96,74 @@ class TypedMarker extends maplibregl.Marker {
   }
 
   setType(newType) {
-    const colors = {
-      start: "#4CAF50",
-      end: "#ffc107",
-      none: "#2196F3",
-      geo: "#80b0ff",
-      geoStart: "#4CAF50",
-    };
+    if (!TypedMarker.VALID_TYPES.has(newType)) return this;
 
+    // Clean up previous type references
+    this._cleanupPreviousType();
 
-    if (["start", "end", "none", "geo", "geoStart"].includes(newType)) {
-      // update start or destination if the type was changed
-      if (this._type === "start" || this._type === "geoStart") {
-        indoorEqual.start = null;
-      }
-      if (this._type === "end") {
-        indoorEqual.destination = null;
-      }
-      // if there is already a start marker update it
-      if (newType === "start" && indoorEqual.start) {
-        if (indoorEqual.start._type === "geoStart") {
-          indoorEqual.start.setType("geo");
-        } else {
-          indoorEqual.start.setType("none");
-        }
-      }
-      // Sets the type of the previous end and start variables to none or geo
-      if (newType === "end" && indoorEqual.destination) {
-        indoorEqual.destination.setType("none");
-      }
-      if (this._type === "geo" && newType === "start") {
-        this._type = "geoStart";
-        this._updateColor(colors["geoStart"]);
-        indoorEqual.start = this;
-      } else {
-        this._type = newType;
-        this._updateColor(colors[newType]);
-      }
-      if (this._type === "start") {
-        indoorEqual.start = this;
-      }
-      if (this._type === "end") {
-        indoorEqual.destination = this;
-      }
-      this._createPopup();
-    }
+    // Handle type-specific logic
+    this._handleTypeTransition(newType);
+
+    // Update references for start/end types
+    this._updateLocationReferences(newType);
+
+    this._createPopup();
     return this;
+  }
+
+  _cleanupPreviousType() {
+    if (["start", "geoStart"].includes(this._type)) {
+      indoorEqual.start = null;
+    }
+    if (this._type === "end") {
+      indoorEqual.destination = null;
+    }
+  }
+
+  _handleTypeTransition(newType) {
+    this._handleExistingMarkers(newType);
+    this._updateTypeAndColor(newType);
+  }
+
+  _handleExistingMarkers(newType) {
+    if (newType === "start" && indoorEqual.start) {
+      const previousStart = indoorEqual.start;
+      previousStart._type === "geoStart"
+        ? previousStart._convertToGeo()
+        : previousStart.setType("none");
+    }
+
+    if (newType === "end" && indoorEqual.destination) {
+      indoorEqual.destination.setType("none");
+    }
+  }
+
+  _updateTypeAndColor(newType) {
+    const isGeoStartTransition = this._type === "geo" && newType === "start";
+
+    if (isGeoStartTransition) {
+      this._type = "geoStart";
+      this.location?.setType("geoStart");
+      console.log("geoStart");
+    } else {
+      this._type = newType;
+    }
+
+    this._updateColor(TypedMarker.TYPE_COLORS[this._type]);
+  }
+
+  _updateLocationReferences() {
+    if (this._type === "start" || this._type === "geoStart") {
+      indoorEqual.start = this;
+    }
+    if (this._type === "end") {
+      indoorEqual.destination = this;
+    }
+  }
+
+  _convertToGeo() {
+    this.setType("geo");
+    this.location.setType("geo");
   }
 
   _updateColor(newColor) {
@@ -298,15 +323,16 @@ function currentLocationSuccess(pos) {
   const lng = pos.coords.longitude;
 
   if (indoorEqual.location) {
-    indoorEqual.location.setLngLat([lng, lat])
+    indoorEqual.location.setLngLat([lng, lat]);
   } else {
     // Initial marker creation
-    const newMarker = new TypedMarker({}, "geo", 0).setLngLat([lng, lat]).addTo(gl);
+    const newMarker = new TypedMarker({}, "geo", 0)
+      .setLngLat([lng, lat])
+      .addTo(gl);
     indoorEqual.addMarker(newMarker);
-    indoorEqual.location = newMarker
+    indoorEqual.location = newMarker;
   }
 }
-
 
 function currentLocationError(err) {
   if (err.code === 1) {
@@ -350,7 +376,9 @@ function handleMarkerCreation(e) {
     return;
   }
 
-  let marker = new TypedMarker({}, "none", currentLevel).setLngLat(e.lngLat).addTo(gl);
+  let marker = new TypedMarker({}, "none", currentLevel)
+    .setLngLat(e.lngLat)
+    .addTo(gl);
 
   indoorEqual.addMarker(marker);
   currentMarkers.push([marker, currentLevel]);
