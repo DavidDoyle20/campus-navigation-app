@@ -214,8 +214,6 @@ function currentLocationError(err) {
 //then we update or add a srouce, and a layer to the map
 const getDirectionsButton = document.getElementById('getDirectionsButton');
 
-
-
 //key: 5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b
 const orsApiKey = '5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b';
 
