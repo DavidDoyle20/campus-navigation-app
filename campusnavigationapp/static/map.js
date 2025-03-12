@@ -511,11 +511,63 @@
           "line-join": "round",
           "line-cap": "round",
         },
+<<<<<<< HEAD
         paint: {
           "line-color": "#3887be",
           "line-width": 5,
         },
       });
+=======
+      };
+
+      //checks if we made a route already, updates it with new geoJSON data, otherwise makes new route
+      if (gl.getSource('route')) {
+        gl.getSource('route').setData(routeGeoJsonData);
+        if(gl.getLayer('route') == undefined) {
+          gl.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3887be',
+              'line-width': 5,
+            },
+          });
+        }
+      } else {
+        //to add a route we need a source, the geojson data, and a layer, which contains the line
+        gl.addSource('route', {
+          type: 'geojson',
+          data: routeGeoJsonData,
+        });
+
+          gl.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3887be',
+              'line-width': 5,
+            },
+          });
+
+        }
+
+      //zooms in/out the map to fit the full route in the screen.
+      const bounds = routeCoordinates.reduce(
+        (bounds, coord) => bounds.extend(coord),
+        new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
+      );
+      gl.fitBounds(bounds, { padding: 20 });
+>>>>>>> 18fec13 (removes route on marker update.)
     }
 
     //zooms in/out the map to fit the full route in the screen.
