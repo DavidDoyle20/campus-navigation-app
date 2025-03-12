@@ -395,6 +395,10 @@
     if (currentMarkers.length >= MAX_MARKERS) {
       const [oldestMarker, oldestMarkerLevel] = currentMarkers.shift(); // remove oldest marker
       indoorEqual.removeMarker(oldestMarker, oldestMarkerLevel);
+      //remove routing layer if markers get changed.
+      if (gl.getLayer("route") != undefined) {
+        gl.removeLayer("route");
+      }
     }
 
     // Ensure we have valid coordinates
