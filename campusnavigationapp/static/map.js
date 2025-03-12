@@ -491,6 +491,21 @@ async function getDirections(start, end) {
       //checks if we made a route already, updates it with new geoJSON data, otherwise makes new route
       if (gl.getSource('route')) {
         gl.getSource('route').setData(routeGeoJsonData);
+        if(gl.getLayer('route') == undefined) {
+          gl.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3887be',
+              'line-width': 5,
+            },
+          });
+        }
       } else {
         //to add a route we need a source, the geojson data, and a layer, which contains the line
         gl.addSource('route', {
@@ -498,20 +513,21 @@ async function getDirections(start, end) {
           data: routeGeoJsonData,
         });
 
-        gl.addLayer({
-          id: 'route',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-          paint: {
-            'line-color': '#3887be',
-            'line-width': 5,
-          },
-        });
-      }
+          gl.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3887be',
+              'line-width': 5,
+            },
+          });
+
+        }
 
       //zooms in/out the map to fit the full route in the screen.
       const bounds = routeCoordinates.reduce(
