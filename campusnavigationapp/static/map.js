@@ -370,6 +370,10 @@ function handleMarkerCreation(e) {
   if (currentMarkers.length >= MAX_MARKERS) {
     const [oldestMarker, oldestMarkerLevel] = currentMarkers.shift(); // remove oldest marker
     indoorEqual.removeMarker(oldestMarker, oldestMarkerLevel);
+    //remove routing layer if markers get changed.
+    if(gl.getLayer('route') != undefined){
+      gl.removeLayer('route');
+    }
   }
 
   // Ensure we have valid coordinates
@@ -429,9 +433,13 @@ const getDirectionsButton = document.getElementById('getDirectionsButton');
 //key: 5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b
 const orsApiKey = '5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b';
 
+//two points
+const markerA = [43.0752889, -87.8862879];
+const markerB = [43.075514, -87.884123];
 
 async function getDirections(start, end) {
       //send start and end points to ors server
+      //https://api.openrouteservice.org/v2/directions/wheelchair?api_key...... should account for handicap routing.
       const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
 
       try {
@@ -480,7 +488,7 @@ async function getDirections(start, end) {
         },
       };
 
-      //checks if we made a rout already, updates it with new geoJSON data, otherwise makes new route
+      //checks if we made a route already, updates it with new geoJSON data, otherwise makes new route
       if (gl.getSource('route')) {
         gl.getSource('route').setData(routeGeoJsonData);
       } else {
