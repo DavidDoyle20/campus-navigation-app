@@ -31,6 +31,10 @@ class Map(LoginRequiredMixin, View):
 class Home(RedirectIfAuthenticatedMixin, View):
     def get(self, request):
         return render(request, 'index.html')
+    
+def logout_view(request):
+    logout(request)
+    return redirect('home')
 
 @method_decorator(csrf_protect, name='dispatch')
 class DomainRestrictedLoginView(Login):
