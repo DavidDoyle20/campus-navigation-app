@@ -309,6 +309,8 @@ startButton.addEventListener("click", async () => {
     "\nDest: ",
     indoorEqual.destination._lngLat
   );
+
+  getDirections(indoorEqual.start._lngLat, indoorEqual.destination._lngLat);
 });
 // <!-- get the users current location. display it as a marker on the map. -->
 // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
@@ -368,6 +370,10 @@ function handleMarkerCreation(e) {
   if (currentMarkers.length >= MAX_MARKERS) {
     const [oldestMarker, oldestMarkerLevel] = currentMarkers.shift(); // remove oldest marker
     indoorEqual.removeMarker(oldestMarker, oldestMarkerLevel);
+    //remove routing layer if markers get changed.
+    if(gl.getLayer('route') != undefined){
+      gl.removeLayer('route');
+    }
   }
 
   // Ensure we have valid coordinates
@@ -414,3 +420,119 @@ indoorEqual.on("levelchange", (level) => {
   currentLevel = level;
   console.log(`Level changed to ${currentLevel}`);
 });
+
+//open route service section:
+//This is the basic implimintation of ors, takes 2 fixed points, calls the openroute with url.
+//if route is found, process the data, and call display route which is passed the returned jsom data
+//maplibregl uses geoJSOM to process routes, so need to convert the JSOM to geoJSOM first
+//then we update or add a srouce, and a layer to the map
+const getDirectionsButton = document.getElementById('getDirectionsButton');
+
+
+
+//key: 5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b
+const orsApiKey = '5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b';
+
+//two points
+const markerA = [43.0752889, -87.8862879];
+const markerB = [43.075514, -87.884123];
+
+async function getDirections(start, end) {
+      //send start and end points to ors server
+      //https://api.openrouteservice.org/v2/directions/wheelchair?api_key...... should account for handicap routing.
+      const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
+
+      try {
+        //gets server response
+        const response = await fetch(url);
+        //gets the json data from the response
+        const data = await response.json();
+
+        //as long as there is a route to take we can process the data
+        if (data.features && data.features.length > 0) {
+
+          //splits data up into three usefull fileds
+          const route = data.features[0].geometry.coordinates; //the array of points taken from a to b
+          const distance = data.features[0].properties.summary.distance; //total distance covered
+          const duration = data.features[0].properties.summary.duration; //estimated time of travel
+
+          //pushes to the console to read, can remove after debugging.
+          console.log('Route:', route);
+          console.log('Distance:', distance, 'meters');
+          console.log('Duration:', duration, 'seconds');
+
+          //update the map to show the routing.
+          displayRouteOnMap(route);
+
+          //returns the three broken up sections of data as an array.
+          return { route, distance, duration };
+        } else {
+          console.error('No route found.');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error fetching directions:', error);
+        return null;
+      }
+    }
+
+    //updates map to show the routing
+    function displayRouteOnMap(routeCoordinates) {
+    //since ors returns jsom and maplibregl uses geoJSOM we need to convert it
+      const routeGeoJsonData = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: routeCoordinates,
+        },
+      };
+
+      //checks if we made a route already, updates it with new geoJSON data, otherwise makes new route
+      if (gl.getSource('route')) {
+        gl.getSource('route').setData(routeGeoJsonData);
+        if(gl.getLayer('route') == undefined) {
+          gl.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3887be',
+              'line-width': 5,
+            },
+          });
+        }
+      } else {
+        //to add a route we need a source, the geojson data, and a layer, which contains the line
+        gl.addSource('route', {
+          type: 'geojson',
+          data: routeGeoJsonData,
+        });
+
+          gl.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#3887be',
+              'line-width': 5,
+            },
+          });
+
+        }
+
+      //zooms in/out the map to fit the full route in the screen.
+      const bounds = routeCoordinates.reduce(
+        (bounds, coord) => bounds.extend(coord),
+        new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
+      );
+      gl.fitBounds(bounds, { padding: 20 });
+    }
