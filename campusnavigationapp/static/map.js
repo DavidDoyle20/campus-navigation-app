@@ -388,6 +388,7 @@
       //remove routing layer if markers get changed.
       if (gl.getLayer("route") != undefined) {
         gl.removeLayer("route");
+        gl.removeSource("route");
       }
     }
 
