@@ -324,15 +324,6 @@
       "\nDest: ",
       indoorEqual.destination._lngLat
     );
-  });
-  // Alter to work with navigation api
-  startButton.addEventListener("click", async () => {
-    console.log(
-      "Start: ",
-      indoorEqual.start._lngLat,
-      "\nDest: ",
-      indoorEqual.destination._lngLat
-    );
 
     getDirections(indoorEqual.start._lngLat, indoorEqual.destination._lngLat);
   });
