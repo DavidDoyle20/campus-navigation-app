@@ -1,40 +1,120 @@
 {% load static %}
 <!DOCTYPE html>
 <html>
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-touch-icon.png' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
-    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="{% static 'favicon/apple-touch-icon.png' %}"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="{% static 'favicon/favicon-32x32.png' %}"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="{% static 'favicon/favicon-16x16.png' %}"
+    />
+    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}" />
 
-    <link href="{% static 'styles.css' %}" rel="stylesheet" type="text/css">
-    <link href="https://unpkg.com/maplibre-gl-indoorequal@latest/maplibre-gl-indoorequal.css" rel="stylesheet" />
-    <link href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css" rel="stylesheet" />
-    
+    <link
+      href="https://unpkg.com/maplibre-gl-indoorequal@latest/maplibre-gl-indoorequal.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/maplibre-gl-indoorequal@latest/dist/maplibre-gl-indoorequal.umd.min.js"></script>
 
+    <link href="{% static 'styles.css' %}" rel="stylesheet" type="text/css" />
+
     <title>Campus Navigation App</title>
-</head>
-    <body>
-        <div id="map-container">
-            <div id="map-overlay"></div>
-            <div id="map"></div>
-            <div id="sidebar"></div>
-            <button id="toggle-sidebar" class="sidebar-toggle">
-                <i class="fas fa-bars" id="hamburger-icon"></i>
-                <i class="fas fa-times" id="close-icon" style="display: none;"></i>
-            </button>
-            <button class="second-button">
-                <i class="fa-regular fa-bookmark"></i>
-            </button>
-            <button id="start-navigation" style="display: none;">Start Navigation</button>
+  </head>
+  <body>
+    <div id="map-container">
+      <div id="map-overlay"></div>
+      <div id="map"></div>
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <img src="{% static 'images/logo.svg' %}" alt="logo" />
+          <h2>Campus Nav</h2>
         </div>
-        <script>
-            window.iconUrl = "{% static 'marker-svgrepo-com.svg' %}";
-        </script>
-        <script src="{% static 'map.js' %}"></script>
-    </body>
+        <ul class="sidebar-links">
+          <h4>
+            <span>General</span>
+            <div class="menu-separator"></div>
+          </h4>
+          <li>
+            <a href="#"
+              ><span class="material-symbols-outlined"> bookmarks </span
+              >Bookmarks</a
+            >
+          </li>
+          <li>
+            <a href="#"
+              ><span class="material-symbols-outlined"> accessible </span
+              >Accessible Route</a
+            >
+          </li>
+          <li>
+            <a href="#"
+              ><span class="material-symbols-outlined"> bookmark_add </span>Add
+              Bookmark</a
+            >
+          </li>
+          <li>
+            <a href="#"
+              ><span class="material-symbols-outlined"> history </span
+              >History</a
+            >
+          </li>
+          <li>
+            <a href="#"
+              ><span class="material-symbols-outlined"> help </span>Help</a
+            >
+          </li>
+          <h4>
+            <span>Account</span>
+            <div class="menu-separator"></div>
+          </h4>
+          <li>
+            <a href="#"
+              ><span class="material-symbols-outlined"> account_circle </span
+              >Profile</a
+            >
+          </li>
+          <li>
+            <a href="#"
+              ><span class="material-symbols-outlined"> settings </span
+              >Settings</a
+            >
+          </li>
+          <li>
+            <a href="{% url 'logout' %}"
+              ><span class="material-symbols-outlined"> logout </span>Logout</a
+            >
+          </li>
+        </ul>
+      </aside>
+      <button id="start-navigation" style="display: none">
+        Start Navigation
+      </button>
+    </div>
+    <script>
+      window.iconUrl = "{% static 'marker-svgrepo-com.svg' %}";
+    </script>
+    <script src="{% static 'map.js' %}"></script>
+  </body>
 </html>
