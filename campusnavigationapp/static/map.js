@@ -4,47 +4,80 @@
   class CustomIndoorEqual extends IndoorEqual {
     constructor(map, options) {
       super(map, options);
-      this.markers = {};
+      // does not include location marker
+      this.MAX_MARKERS = 2;
+      this.level = 0;
+      // does not store location marker
+      this.markers = [];
       this.start = null;
       this.destination = null;
       this.location = null;
     }
 
     addMarker(marker) {
-      const level = marker._level;
-      if (!this.markers[level]) {
-        this.markers[level] = [];
+      // Handle location marker separately
+      if (marker._type == "geo") {
+        this.location = marker;
+        return;
       }
-      this.markers[level].push(marker);
-      if (level === this.level) {
-        marker.addTo(this.map);
+      // remove color from geo
+      if (marker._type == "start") {
+        this.start = marker;
+        // Update geo marker if it was the start
+        if (this.location._type === "geoStart") {
+          this.location.setType("geo");
+        }
       }
+      if (marker._type == "end") {
+        this.destination = marker;
+      }
+
+      if (this.markers.length >= this.MAX_MARKERS) {
+        const oldestMarker = this.markers.shift();
+        this.removeMarker(oldestMarker);
+      }
+      this.markers.push(marker);
+      marker.addTo(this.map);
+      this.updateRoute();
+      updateStartButtonVisibility();
     }
 
-    toggleMarkers(level) {
-      Object.keys(this.markers).forEach((markerLevel) => {
-        this.markers[markerLevel].forEach((marker) => {
-          if (markerLevel === level) {
-            marker.addTo(this.map);
-          } else {
-            marker.remove();
-          }
-        });
+    createAndAddMarker(lng, lat, type = "none", level = 0) {
+      if (typeof lng !== "number" || typeof lat !== "number") {
+        throw new Error("Invalid coordinates");
+      }
+      if (!TypedMarker.VALID_TYPES.has(type)) {
+        type = "none";
+      }
+      const marker = new TypedMarker({}, type, level).setLngLat([lng, lat]);
+      this.addMarker(marker);
+      return marker;
+    }
+
+    // Toggle markers bases on level
+    toggleMarkers(level = this.level) {
+      if (this.location) {
+        const shouldShow = this.location._level === level;
+        shouldShow ? this.location.addTo(this.map) : this.location.remove();
+      }
+      // Update regular markers
+      this.markers.forEach((marker) => {
+        marker._level === level ? marker.addTo(this.map) : marker.remove();
       });
     }
 
     removeMarker(marker) {
-      const level = marker._level;
-      if (this.markers[level]) {
-        if (this.start === marker) {
-          this.start = null;
-        }
-        if (this.destination === marker) {
-          this.destination = null;
-        }
-        this.markers[level] = this.markers[level].filter((m) => m !== marker);
-        marker.remove();
+      marker.remove();
+      const index = this.markers.indexOf(marker);
+      if (index > -1) {
+        this.markers.splice(index, 1);
       }
+
+      if (marker === this.location) this.location = null;
+      if (marker === this.start) this.start = null;
+      if (marker === this.destination) this.destination = null;
+
+      this.updateRoute();
       updateStartButtonVisibility();
     }
 
@@ -53,6 +86,14 @@
       this._updateFilters();
       this.toggleMarkers(level);
       this._emitLevelChange();
+    }
+
+    updateRoute() {
+      //remove routing layer if markers get changed.
+      if (this.map.getLayer("route") != undefined) {
+        this.map.removeLayer("route");
+        this.map.removeSource("route");
+      }
     }
   }
 
@@ -239,71 +280,93 @@
   }
 
   function initMap() {
+    const mapContainer = document.getElementById("map");
+
+    // create loading overlay
+    const loadingOverlay = document.createElement("div");
+    loadingOverlay.className = "loading-overlay";
+    loadingOverlay.innerHTML = '<div class="loader"></div>';
+    mapContainer.appendChild(loadingOverlay);
+
     gl = new maplibregl.Map({
       container: "map",
       style:
         "https://api.maptiler.com/maps/openstreetmap/style.json?key=UOLh4Ktc21SMniW0v30i",
       center: [-87.882799, 43.077622],
       zoom: 17,
-      minZoom: 17,
+      minZoom: 16,
       maxZoom: 20,
       attributionControl: false,
+      preserveDrawingBuffer: true,
     });
-    indoorEqual = new CustomIndoorEqual(gl, {
-      url: "https://osm.uwmnav.dedyn.io",
-    });
-
-    gl.addControl(indoorEqual);
     gl.dragRotate.disable();
 
-    requestIdleCallback(() => {
-      indoorEqual.loadSprite(
-        "https://unpkg.com/maplibre-gl-indoorequal@latest/sprite/indoorequal"
-      );
+    indoorEqual = new CustomIndoorEqual(gl, {
+      url: "https://osm.uwmnav.dedyn.io",
+      heatmap: false,
     });
 
-    gl.once("idle", () => {
-      gl.setPaintProperty("indoor-polygon", "fill-color", [
-        "match",
-        ["get", "class"],
-        "room",
-        "#ffd359",
-        "#b8b8b8", // default color
-      ]);
-      gl.setPaintProperty("indoor-lines", "line-color", [
-        "match",
-        ["get", "class"],
-        "room",
-        "#ffbd00",
-        "#000000", // default color
-      ]);
-    });
-
-    window.addEventListener("resize", () => {
-      gl.resize();
-    });
-
-    window.addEventListener("zoomevent", () => {
-      gl.resize();
-    });
+    Promise.all([
+      new Promise((resolve) =>
+        indoorEqual
+          .loadSprite(
+            "https://unpkg.com/maplibre-gl-indoorequal@latest/sprite/indoorequal"
+          )
+          .then(resolve)
+      ),
+      new Promise((resolve) => gl.once("idle", resolve)),
+      new Promise((resolve) => {
+        const handler = () => {
+          indoorEqual.off("levelschange", handler); // Remove listener after first trigger
+          resolve();
+        };
+        indoorEqual.on("levelschange", handler); // Use standard event listener
+      }),
+    ])
+      .then(() => {
+        gl.setPaintProperty("indoor-polygon", "fill-color", [
+          "match",
+          ["get", "class"],
+          "room",
+          "#ffd359",
+          "#b8b8b8", // default color
+        ]);
+        gl.setPaintProperty("indoor-lines", "line-color", [
+          "match",
+          ["get", "class"],
+          "room",
+          "#ffbd00",
+          "#000000", // default color
+        ]);
+        loadingOverlay.remove();
+        enableInteractions();
+      })
+      .catch((error) => {
+        console.error("Initialization failed:", error);
+        loadingOverlay.innerHTML = "Failed to load indoor navigation";
+      });
   }
 
+  function enableInteractions() {
+    // Enable interactions
+    gl.addControl(indoorEqual);
+    gl.on("contextmenu", handleMarkerCreation);
+    gl.on("touchstart", handleTouchStart);
+    gl.on("touchend", handleTouchEnd);
+    gl.on("touchmove", handleTouchMove);
+
+    window.addEventListener("resize", () => gl.resize());
+    window.addEventListener("zoomevent", () => gl.resize());
+
+    // Initialize other components
+    navigator.geolocation.watchPosition(
+      currentLocationSuccess,
+      currentLocationError
+    );
+  }
   document.addEventListener("DOMContentLoaded", function () {
     initMap(); // Initialize first
-
-    // Prevent race condition
-    gl.on("load", () => {
-      gl.on("contextmenu", handleMarkerCreation);
-      gl.on("touchstart", handleTouchStart);
-      gl.on("touchend", handleTouchEnd);
-      gl.on("touchmove", handleTouchMove);
-    });
-
-    // Listen for level changes
-    indoorEqual.on("levelchange", (level) => {
-      currentLevel = level;
-      console.log(`Level changed to ${currentLevel}`);
-    });
+    loadBookmarks();
 
     // <!-- get the users current location. display it as a marker on the map. -->
     // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
@@ -311,12 +374,14 @@
       currentLocationSuccess,
       currentLocationError
     );
+    addBookmarkButton[0].addEventListener("click", function (e) {
+      addBookmark(e);
+    });
   });
 
-  // Sidebar toggle functionality
+  const addBookmarkButton = document.getElementsByClassName("bookmark_add");
   const startButton = document.getElementById("start-navigation");
 
-  // Alter to work with navigation api
   startButton.addEventListener("click", async () => {
     console.log(
       "Start: ",
@@ -327,12 +392,166 @@
 
     getDirections(indoorEqual.start._lngLat, indoorEqual.destination._lngLat);
   });
-  // <!-- get the users current location. display it as a marker on the map. -->
-  // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
-  navigator.geolocation.watchPosition(
-    currentLocationSuccess,
-    currentLocationError
-  );
+
+  async function addBookmark() {
+    if (!indoorEqual.start || !indoorEqual.destination) {
+      alert("Please enter a start and a destination");
+      console.log("Missing start or destination");
+      return;
+    }
+
+    let name;
+    do {
+      name = prompt("Enter bookmark name (required):");
+      if (name === null) return; // User clicked cancel
+      name = name.trim();
+    } while (!name);
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("start_level", indoorEqual.start._level);
+    formData.append("start_lng", indoorEqual.start._lngLat.lng);
+    formData.append("start_lat", indoorEqual.start._lngLat.lat);
+    formData.append("end_level", indoorEqual.destination._level);
+    formData.append("end_lng", indoorEqual.destination._lngLat.lng);
+    formData.append("end_lat", indoorEqual.destination._lngLat.lat);
+
+    if (!name) return;
+
+    try {
+      const response = await fetch("/bookmarks/save/", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (result.status === "success") {
+        loadBookmarks();
+        console.log(result);
+      }
+    } catch (error) {
+      console.error("Bookmark save error:", error);
+    }
+  }
+
+  async function loadBookmarks() {
+    try {
+      const response = await fetch("/bookmarks/");
+      const data = await response.json();
+      const dropdown = document.getElementById("bookmarks-dropdown");
+
+      dropdown.innerHTML = data.bookmarks
+        .map(
+          (bookmark) => `
+        <li data-bookmark-id="${bookmark.id}">
+          <div class="bookmark-item">
+            <span class="button-primary">${bookmark.name}</span>
+          </div> 
+        </li>
+      `
+        )
+        .join("");
+      // Add event listeners
+      dropdown.querySelectorAll(".button-primary").forEach((button) => {
+        button.addEventListener("click", async (e) => {
+          const listItem = e.target.closest("li");
+          const bookmarkId = listItem.dataset.bookmarkId;
+
+          try {
+            // place bookmark coordinates on map
+            const response = await fetch(`/bookmarks/${bookmarkId}/`);
+            const { bookmark } = await response.json();
+
+            const startMarker = indoorEqual.createAndAddMarker(
+              bookmark.start_lng,
+              bookmark.start_lat,
+              "start",
+              bookmark.start_level
+            );
+            const endMarker = indoorEqual.createAndAddMarker(
+              bookmark.end_lng,
+              bookmark.end_lat,
+              "end",
+              bookmark.end_level
+            );
+
+            console.log(indoorEqual.markers);
+          } catch (error) {
+            console.error("Error loading bookmark: ", error);
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Error loading bookmarks: ", error);
+    }
+  }
+
+  // Sidebar controls
+  const sidebar = document.querySelector(".sidebar");
+  let wasActive = false;
+  let hoverTimeout;
+
+  // Toggle dropdown
+  document.querySelectorAll(".dropdown-btn").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const container = e.currentTarget.closest(".dropdown-container");
+      container.classList.toggle("active");
+    });
+  });
+
+  // Open sidebar when mouse hovers
+  sidebar.addEventListener("mouseenter", (e) => {
+    clearTimeout(hoverTimeout);
+
+    if (wasActive) {
+      const previouslyActive = document.querySelector(".dropdown-container");
+      previouslyActive.classList.add("active");
+      wasActive = false;
+    }
+  });
+
+  //Close dropdown if mouse leaves sidebar
+  sidebar.addEventListener("mouseleave", (e) => {
+    const activeDropdown = document.querySelector(".dropdown-container.active");
+    if (activeDropdown) {
+      wasActive = true;
+      hoverTimeout = setTimeout(() => {
+        activeDropdown.classList.remove("active");
+      }, 300);
+    }
+  });
+
+  // For mobile functionality close sidebar if map is clicked
+  document.addEventListener("click", (e) => {
+    const activeDropdown = document.querySelector(".dropdown-container.active");
+    if (!sidebar.contains(e.target)) {
+      sidebar.classList.remove("active");
+      if (activeDropdown) {
+        activeDropdown.classList.remove("active");
+        wasActive = true;
+      }
+    }
+  });
+
+  document.querySelectorAll(".dropdown-trigger").forEach((trigger) => {
+    trigger.addEventListener("click", (e) => {
+      const container = e.currentTarget.closest(".dropdown-container");
+      const isOpening = !container.classList.contains("active");
+
+      // Close all dropdowns first
+      document.querySelectorAll(".dropdown-container").forEach((c) => {
+        c.classList.remove("active");
+      });
+
+      // Toggle clicked dropdown
+      if (isOpening) {
+        container.classList.add("active");
+      }
+    });
+  });
 
   // called every time a new location is received
   function currentLocationSuccess(pos) {
@@ -340,14 +559,11 @@
     const lng = pos.coords.longitude;
 
     if (indoorEqual.location) {
+      // update the location of the current location marker
       indoorEqual.location.setLngLat([lng, lat]);
     } else {
       // Initial marker creation
-      const newMarker = new TypedMarker({}, "geo", 0)
-        .setLngLat([lng, lat])
-        .addTo(gl);
-      indoorEqual.addMarker(newMarker);
-      indoorEqual.location = newMarker;
+      const newMarker = indoorEqual.createAndAddMarker(lng, lat, "geo", 0);
     }
   }
 
@@ -363,12 +579,7 @@
 
   // Marker functionality
   // TODO: Add options in the popup menu (e.g. copy coordinates, change floor, etc.)
-  let currentLevel = 0;
   let longPressTimer;
-
-  let currentMarkers = [];
-  const MAX_MARKERS = 2;
-
   const LONG_PRESS_DURATION = 500; // Milliseconds
 
   // Function to update the visibility of the Start button
@@ -382,28 +593,20 @@
   }
 
   function handleMarkerCreation(e) {
-    if (currentMarkers.length >= MAX_MARKERS) {
-      const [oldestMarker, oldestMarkerLevel] = currentMarkers.shift(); // remove oldest marker
-      indoorEqual.removeMarker(oldestMarker, oldestMarkerLevel);
-      //remove routing layer if markers get changed.
-      if (gl.getLayer("route") != undefined) {
-        gl.removeLayer("route");
-        gl.removeSource("route");
-      }
-    }
-
     // Ensure we have valid coordinates
     if (!e.lngLat) {
       console.warn("No lngLat available from the event.");
       return;
     }
 
-    let marker = new TypedMarker({}, "none", currentLevel)
-      .setLngLat(e.lngLat)
-      .addTo(gl);
-
-    indoorEqual.addMarker(marker);
-    currentMarkers.push([marker, currentLevel]);
+    const { lng, lat } = e.lngLat;
+    const newMarker = indoorEqual.createAndAddMarker(
+      lng,
+      lat,
+      "none",
+      indoorEqual.level
+    );
+    console.log(newMarker);
   }
 
   // This code makes interaction with the markers better on mobile
@@ -418,11 +621,11 @@
     }, LONG_PRESS_DURATION);
   }
 
-  function handleTouchEnd(e) {
+  function handleTouchEnd() {
     clearTimeout(longPressTimer);
   }
 
-  function handleTouchMove(e) {
+  function handleTouchMove() {
     clearTimeout(longPressTimer);
   }
 
@@ -437,7 +640,7 @@
 
   async function getDirections(start, end) {
     //send start and end points to ors server
-    const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
+    const url = `http://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
 
     try {
       //gets server response
@@ -515,5 +718,21 @@
       new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
     );
     gl.fitBounds(bounds, { padding: 20 });
+  }
+
+  function getCookie(cname) {
+    let name = cname + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(";");
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == " ") {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
   }
 })();

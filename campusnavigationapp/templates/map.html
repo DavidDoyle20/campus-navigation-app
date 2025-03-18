@@ -55,11 +55,16 @@
             <span>General</span>
             <div class="menu-separator"></div>
           </h4>
-          <li>
-            <a href="#"
-              ><span class="material-symbols-outlined"> bookmarks </span
-              >Bookmarks</a
-            >
+          <li class="dropdown-container">
+            <span class="dropdown-trigger" tabindex="0">
+              <span class="material-symbols-outlined">bookmarks</span>
+              Bookmarks
+              <span class="material-symbols-outlined dropdown-icon">keyboard_arrow_down</span>
+            </span>
+            <ul class="dropdown-menu" id="bookmarks-dropdown">
+              <!-- list items added here -->
+            </ul>
+          </li>
           </li>
           <li>
             <a href="#"
@@ -68,10 +73,10 @@
             >
           </li>
           <li>
-            <a href="#"
-              ><span class="material-symbols-outlined"> bookmark_add </span>Add
-              Bookmark</a
-            >
+            <a href="#" class="bookmark_add">
+              <span class="material-symbols-outlined"> bookmark_add </span>
+              Add Bookmark
+            </a>
           </li>
           <li>
             <a href="#"
@@ -114,6 +119,7 @@
     <script>
       window.iconUrl = "{% static 'marker-svgrepo-com.svg' %}";
     </script>
-    <script src="{% static 'map.js' %}"></script>
+    <script type="module" src="{% static 'map.js' %}"></script>
+    <script></script>
   </body>
 </html>
