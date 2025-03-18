@@ -14,17 +14,8 @@ body {
   font-size: 100%;
   min-height: 100vh;
   background: #f0f4ff;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  font-size: 100%;
-  min-height: 100vh;
-  background: #f0f4ff;
 }
 #map-container {
-  position: relative;
-  height: 100vh;
-  width: 100%;
   position: relative;
   height: 100vh;
   width: 100%;
@@ -34,23 +25,15 @@ body {
   top: 0;
   bottom: 0;
   width: 100%;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
 }
 
 .maplibregl-popup-content {
-  border-radius: 15px; /* Adjust radius as needed */
-  overflow: hidden; /* Prevent content from spilling out of rounded corners */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Optional: Add a shadow for better visuals */
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .popup-buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -75,7 +58,6 @@ body {
   background-color: #0056b3; /* Darker blue */
 }
 
-/* Specific styles for individual buttons (optional) */
 #remove-marker {
   background-color: #ff0000; /* Red for delete */
 }
@@ -217,4 +199,165 @@ body {
   color: #161a2d;
   background: #ffbd00;
   border-radius: 4px;
+}
+.dropdown-container {
+  position: relative;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 15px 10px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-menu {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease,
+    visibility 0.3s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-left: 25px;
+  display: flex;
+  flex-direction: column;
+  min-width: 250px;
+}
+
+.dropdown-container.active .dropdown-menu {
+  max-height: 500px;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-icon {
+  margin-left: auto;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.dropdown-container.active .dropdown-icon {
+  transform: rotate(180deg);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-icon:not(.active) {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 1, 1) !important;
+}
+
+.dropdown-trigger:hover {
+  background: #ffbd00;
+  color: black;
+  border-radius: 4px;
+}
+
+.dropdown-menu:not(.active) {
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 1, 1),
+    opacity 0.2s ease 0.05s, visibility 0.25s ease;
+}
+
+ul {
+  list-style-type: none;
+}
+
+#bookmarks-dropdown li {
+  margin: 2px 0;
+  padding: 0;
+}
+.bookmark-item {
+  cursor: pointer;
+  color: white;
+  display: block;
+  overflow: hidden;
+  background: #494949;
+  padding-left: 12px;
+  border-radius: 4px;
+
+  flex: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
+}
+
+.bookmark-item:hover {
+  color: #161a2d;
+  background: #ffbd00;
+}
+
+@media (max-width: 768px) {
+  #bookmarks-dropdown li {
+    flex-direction: column;
+    min-height: auto;
+  }
+}
+
+@keyframes l5 {
+  0% {
+    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+  }
+  33% {
+    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+    width: 60px;
+    height: 60px;
+  }
+  66% {
+    background-position: 100% 0, 100% 100%, 0 100%, 0 0;
+    width: 60px;
+    height: 60px;
+  }
+  100% {
+    background-position: 100% 0, 100% 100%, 0 100%, 0 0;
+  }
+}
+
+.loader {
+  width: 40px;
+  height: 40px;
+  --c: no-repeat linear-gradient(rgb(255, 189, 0) 0 0);
+  background: var(--c), var(--c), var(--c), var(--c);
+  background-size: 21px 21px;
+  animation: l5 1.5s infinite cubic-bezier(0.3, 1, 0, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+}
+
+@keyframes l5 {
+  0% {
+    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+  }
+  33% {
+    background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+    width: 60px;
+    height: 60px;
+  }
+  66% {
+    background-position: 100% 0, 100% 100%, 0 100%, 0 0;
+    width: 60px;
+    height: 60px;
+  }
+  100% {
+    background-position: 100% 0, 100% 100%, 0 100%, 0 0;
+  }
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
 }
