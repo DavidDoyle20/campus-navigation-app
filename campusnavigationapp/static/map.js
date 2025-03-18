@@ -640,7 +640,7 @@
 
   async function getDirections(start, end) {
     //send start and end points to ors server
-    const url = `http://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
+    const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
 
     try {
       //gets server response
