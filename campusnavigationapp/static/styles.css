@@ -361,3 +361,42 @@ ul {
   justify-content: center;
   z-index: 999;
 }
+
+/* Remove default MapLibre control shadows */
+.maplibregl-ctrl-group {
+  box-shadow: none !important;
+}
+
+.maplibregl-ctrl-indoorequal {
+  background: #494949 !important;
+  border-radius: 4px;
+}
+
+.maplibregl-ctrl-indoorequal button {
+  width: auto;
+  min-width: 40px;
+  margin: 4px;
+  background: #333333;
+  color: #ffffff;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.maplibregl-ctrl-indoorequal button.maplibregl-ctrl-active {
+  background: #ffbd00;
+  color: black;
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .maplibregl-ctrl-indoorequal {
+    bottom: 65px;
+    left: 10px;
+    flex-direction: row;
+  }
+
+  .maplibregl-ctrl-indoorequal button {
+    padding: 6px;
+    min-width: 35px;
+  }
+}
