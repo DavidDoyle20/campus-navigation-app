@@ -290,6 +290,16 @@ ul {
   background: #ffbd00;
 }
 
+.accessible.active {
+  background: #ffbd00;
+  color: black;
+  border-radius: 4px;
+}
+
+.accessible.active:hover {
+  background: #ecae02;
+}
+
 @media (max-width: 768px) {
   #bookmarks-dropdown li {
     flex-direction: column;

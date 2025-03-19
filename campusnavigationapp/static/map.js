@@ -1,5 +1,6 @@
 (function () {
   let indoorEqual, gl;
+  let accessible = false;
 
   class CustomIndoorEqual extends IndoorEqual {
     constructor(map, options) {
@@ -358,7 +359,8 @@
     window.addEventListener("resize", () => gl.resize());
     window.addEventListener("zoomevent", () => gl.resize());
 
-    // Initialize other components
+    // <!-- get the users current location. display it as a marker on the map. -->
+    // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
     navigator.geolocation.watchPosition(
       currentLocationSuccess,
       currentLocationError
@@ -368,12 +370,6 @@
     initMap(); // Initialize first
     loadBookmarks();
 
-    // <!-- get the users current location. display it as a marker on the map. -->
-    // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
-    navigator.geolocation.watchPosition(
-      currentLocationSuccess,
-      currentLocationError
-    );
     addBookmarkButton[0].addEventListener("click", function (e) {
       addBookmark(e);
     });
@@ -381,6 +377,7 @@
 
   const addBookmarkButton = document.getElementsByClassName("bookmark_add");
   const startButton = document.getElementById("start-navigation");
+  const accessibilityButton = document.getElementsByClassName("accessible")[0];
 
   startButton.addEventListener("click", async () => {
     console.log(
@@ -391,6 +388,11 @@
     );
 
     getDirections(indoorEqual.start._lngLat, indoorEqual.destination._lngLat);
+  });
+
+  accessibilityButton.addEventListener("click", () => {
+    accessible = !accessible;
+    accessibilityButton.classList.toggle("active");
   });
 
   async function addBookmark() {
@@ -641,6 +643,8 @@
   async function getDirections(start, end) {
     //send start and end points to ors server
     const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
+    // Global variable that says if we want an accessible route
+    console.log("Accessible Route: ", accessible);
 
     try {
       //gets server response
