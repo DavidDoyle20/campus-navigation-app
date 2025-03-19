@@ -362,9 +362,8 @@ ul {
   z-index: 999;
 }
 
-/* Remove default MapLibre control shadows */
-.maplibregl-ctrl-group {
-  box-shadow: none !important;
+.maplibregl-ctrl-group button + button {
+  border-top: none;
 }
 
 .maplibregl-ctrl-indoorequal {
@@ -387,6 +386,9 @@ ul {
   color: black;
 }
 
+.maplibregl-ctrl-indoorequal button.maplibregl-ctrl-active:hover {
+  color: white;
+}
 /* Mobile optimization */
 @media (max-width: 768px) {
   .maplibregl-ctrl-indoorequal {
