@@ -66,20 +66,20 @@ body {
   background-color: #cc0000; /* Darker red */
 }
 
-#set-start {
+#set-destination {
   background-color: #28a745; /* Green for start */
 }
 
-#set-start:hover {
+#set-destination:hover {
   background-color: #218838; /* Darker green */
 }
 
-#set-destination {
-  background-color: #ffc107; /* Yellow for destination */
+#set-start {
+  background-color: #007bff;
 }
 
-#set-destination:hover {
-  background-color: #e0a800; /* Darker yellow */
+#set-start:hover {
+  background-color: #0056b3;
 }
 
 #start-navigation {
@@ -288,6 +288,16 @@ ul {
 .bookmark-item:hover {
   color: #161a2d;
   background: #ffbd00;
+}
+
+.accessible.active {
+  background: #ffbd00;
+  color: black;
+  border-radius: 4px;
+}
+
+.accessible.active:hover {
+  background: #ecae02;
 }
 
 @media (max-width: 768px) {

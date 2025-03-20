@@ -1,5 +1,6 @@
 (function () {
   let indoorEqual, gl;
+  let accessible = false;
 
   class CustomIndoorEqual extends IndoorEqual {
     constructor(map, options) {
@@ -100,9 +101,9 @@
   class TypedMarker extends maplibregl.Marker {
     static VALID_TYPES = new Set(["start", "end", "none", "geo", "geoStart"]);
     static TYPE_COLORS = {
-      start: "#4CAF50",
-      end: "#ffc107",
-      none: "#2196F3",
+      start: "#007bff",
+      end: "#4CAF50",
+      none: "#333333",
       geo: "#80b0ff",
       geoStart: "#4CAF50",
     };
@@ -358,7 +359,8 @@
     window.addEventListener("resize", () => gl.resize());
     window.addEventListener("zoomevent", () => gl.resize());
 
-    // Initialize other components
+    // <!-- get the users current location. display it as a marker on the map. -->
+    // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
     navigator.geolocation.watchPosition(
       currentLocationSuccess,
       currentLocationError
@@ -368,12 +370,6 @@
     initMap(); // Initialize first
     loadBookmarks();
 
-    // <!-- get the users current location. display it as a marker on the map. -->
-    // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
-    navigator.geolocation.watchPosition(
-      currentLocationSuccess,
-      currentLocationError
-    );
     addBookmarkButton[0].addEventListener("click", function (e) {
       addBookmark(e);
     });
@@ -381,6 +377,7 @@
 
   const addBookmarkButton = document.getElementsByClassName("bookmark_add");
   const startButton = document.getElementById("start-navigation");
+  const accessibilityButton = document.getElementsByClassName("accessible")[0];
 
   startButton.addEventListener("click", async () => {
     console.log(
@@ -390,7 +387,12 @@
       indoorEqual.destination._lngLat
     );
 
-    getDirections(indoorEqual.start._lngLat, indoorEqual.destination._lngLat);
+    getDirections(indoorEqual.start, indoorEqual.destination);
+  });
+
+  accessibilityButton.addEventListener("click", () => {
+    accessible = !accessible;
+    accessibilityButton.classList.toggle("active");
   });
 
   async function addBookmark() {
@@ -639,8 +641,14 @@
   const orsApiKey = "5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b";
 
   async function getDirections(start, end) {
+    const { lng: startLng, lat: startLat } = start._lngLat;
+    const { lng: endLng, lat: endLat } = end._lngLat;
+
     //send start and end points to ors server
-    const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${start.lng},${start.lat}&end=${end.lng},${end.lat}`;
+    const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
+
+    // Global variable that says if we want an accessible route
+    console.log("Accessible Route: ", accessible);
 
     try {
       //gets server response
