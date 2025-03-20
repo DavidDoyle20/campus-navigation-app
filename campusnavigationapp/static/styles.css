@@ -66,20 +66,20 @@ body {
   background-color: #cc0000; /* Darker red */
 }
 
-#set-start {
+#set-destination {
   background-color: #28a745; /* Green for start */
 }
 
-#set-start:hover {
+#set-destination:hover {
   background-color: #218838; /* Darker green */
 }
 
-#set-destination {
-  background-color: #ffc107; /* Yellow for destination */
+#set-start {
+  background-color: #007bff;
 }
 
-#set-destination:hover {
-  background-color: #e0a800; /* Darker yellow */
+#set-start:hover {
+  background-color: #0056b3;
 }
 
 #start-navigation {
