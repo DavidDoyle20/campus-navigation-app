@@ -22,14 +22,6 @@
         this.location = marker;
         return;
       }
-      // remove color from geo
-      // if (marker._type == "start") {
-      //   this.start = marker;
-      //   // Update geo marker if it was the start
-      //   if (this.location._type === "geoStart") {
-      //     this.location.setType("geo");
-      //   }
-      // }
       if (marker._type == "end") {
         this.destination = marker;
       }
@@ -568,8 +560,6 @@
     indoorEqual.location ?
       indoorEqual.location.setLngLat([lng, lat]) :
       indoorEqual.createAndAddMarker(lng, lat, "geo", 0);
-
-    console.log(indoorEqual.location);
   }
 
   function currentLocationError(err) {
