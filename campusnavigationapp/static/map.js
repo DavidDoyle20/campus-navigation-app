@@ -22,6 +22,14 @@
         this.location = marker;
         return;
       }
+      // remove color from geo
+      if (marker._type == "start") {
+        this.start = marker;
+        // Update geo marker if it was the start
+        if (this.location._type === "geoStart") {
+          this.location.setType("geo");
+        }
+      }
       if (marker._type == "end") {
         this.destination = marker;
       }
