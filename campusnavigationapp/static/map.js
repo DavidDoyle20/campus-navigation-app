@@ -18,17 +18,18 @@
     addMarker(marker) {
       // Handle location marker separately
       if (marker._type == "geo") {
+        marker.addTo(this.map);
         this.location = marker;
         return;
       }
       // remove color from geo
-      if (marker._type == "start") {
-        this.start = marker;
-        // Update geo marker if it was the start
-        if (this.location._type === "geoStart") {
-          this.location.setType("geo");
-        }
-      }
+      // if (marker._type == "start") {
+      //   this.start = marker;
+      //   // Update geo marker if it was the start
+      //   if (this.location._type === "geoStart") {
+      //     this.location.setType("geo");
+      //   }
+      // }
       if (marker._type == "end") {
         this.destination = marker;
       }
@@ -74,7 +75,7 @@
         this.markers.splice(index, 1);
       }
 
-      if (marker === this.location) this.location = null;
+      // if (marker === this.location) this.location = null;
       if (marker === this.start) this.start = null;
       if (marker === this.destination) this.destination = null;
 
@@ -105,7 +106,7 @@
       end: "#4CAF50",
       none: "#333333",
       geo: "#80b0ff",
-      geoStart: "#4CAF50",
+      geoStart: "#007bff",
     };
 
     constructor(options = {}, type = "none", level = 0) {
@@ -157,6 +158,7 @@
     }
 
     _cleanupPreviousType() {
+      // If the new type is one of these the start variable is set to null in preparation
       if (["start", "geoStart"].includes(this._type)) {
         indoorEqual.start = null;
       }
@@ -170,6 +172,7 @@
       this._updateTypeAndColor(newType);
     }
 
+    // Changes marker types
     _handleExistingMarkers(newType) {
       if (newType === "start" && indoorEqual.start) {
         const previousStart = indoorEqual.start;
@@ -188,7 +191,9 @@
 
       if (isGeoStartTransition) {
         this._type = "geoStart";
-        this.location?.setType("geoStart");
+        indoorEqual.location ?
+          indoorEqual.location.setType("geoStart") :
+          console.log("Location is undefined", indoorEqual.location);
       } else {
         this._type = newType;
       }
@@ -207,7 +212,7 @@
 
     _convertToGeo() {
       this.setType("geo");
-      this.location.setType("geo");
+      indoorEqual.location.setType("geo");
     }
 
     _updateColor(newColor) {
@@ -560,13 +565,11 @@
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    if (indoorEqual.location) {
-      // update the location of the current location marker
-      indoorEqual.location.setLngLat([lng, lat]);
-    } else {
-      // Initial marker creation
-      const newMarker = indoorEqual.createAndAddMarker(lng, lat, "geo", 0);
-    }
+    indoorEqual.location ?
+      indoorEqual.location.setLngLat([lng, lat]) :
+      indoorEqual.createAndAddMarker(lng, lat, "geo", 0);
+
+    console.log(indoorEqual.location);
   }
 
   function currentLocationError(err) {
@@ -608,7 +611,6 @@
       "none",
       indoorEqual.level
     );
-    console.log(newMarker);
   }
 
   // This code makes interaction with the markers better on mobile
