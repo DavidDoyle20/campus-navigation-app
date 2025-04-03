@@ -40,7 +40,7 @@
       }
       this.markers.push(marker);
       marker.addTo(this.map);
-      this.updateRoute();
+      this.removeRoute();
       updateStartButtonVisibility();
     }
 
@@ -79,7 +79,7 @@
       if (marker === this.start) this.start = null;
       if (marker === this.destination) this.destination = null;
 
-      this.updateRoute();
+      this.removeRoute();
       updateStartButtonVisibility();
     }
 
@@ -88,13 +88,24 @@
       this._updateFilters();
       this.toggleMarkers(level);
       this._emitLevelChange();
+      this._updateRouteVisibility();
     }
 
-    updateRoute() {
+    removeRoute() {
       //remove routing layer if markers get changed.
       if (this.map.getLayer("route") != undefined) {
         this.map.removeLayer("route");
         this.map.removeSource("route");
+      }
+    }
+
+    _updateRouteVisibility() {
+      if (this.map.getSource("route")) {
+        this.map.setFilter("route", [
+          "==",
+          ["to-number", ["get", "level"]],
+          parseInt(this.level, 10),
+        ]);
       }
     }
   }
@@ -191,9 +202,9 @@
 
       if (isGeoStartTransition) {
         this._type = "geoStart";
-        indoorEqual.location ?
-          indoorEqual.location.setType("geoStart") :
-          console.log("Location is undefined", indoorEqual.location);
+        indoorEqual.location
+          ? indoorEqual.location.setType("geoStart")
+          : console.log("Location is undefined", indoorEqual.location);
       } else {
         this._type = newType;
       }
@@ -565,9 +576,12 @@
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
 
-    indoorEqual.location ?
-      indoorEqual.location.setLngLat([lng, lat]) :
+    // Update location marker
+    if (indoorEqual.location) {
+      indoorEqual.location.setLngLat([lng, lat]);
+    } else {
       indoorEqual.createAndAddMarker(lng, lat, "geo", 0);
+    }
   }
 
   function currentLocationError(err) {
@@ -631,101 +645,100 @@
     clearTimeout(longPressTimer);
   }
 
-  //open route service section:
-  //This is the basic implimintation of ors, takes 2 fixed points, calls the openroute with url.
-  //if route is found, process the data, and call display route which is passed the returned jsom data
-  //maplibregl uses geoJSOM to process routes, so need to convert the JSOM to geoJSOM first
-  //then we update or add a srouce, and a layer to the map
-
-  //key: 5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b
-  const orsApiKey = "5b3ce3597851110001cf6248cba65e5f9d29419d831a527c391f1e9b";
-
   async function getDirections(start, end) {
-    const { lng: startLng, lat: startLat } = start._lngLat;
-    const { lng: endLng, lat: endLat } = end._lngLat;
-
-    //send start and end points to ors server
-    const url = `https://api.openrouteservice.org/v2/directions/foot-walking?api_key=${orsApiKey}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
-
-    // Global variable that says if we want an accessible route
-    console.log("Accessible Route: ", accessible);
-
     try {
-      //gets server response
-      const response = await fetch(url);
-      //gets the json data from the response
+      const { lng: startLng, lat: startLat } = start._lngLat;
+      const { lng: endLng, lat: endLat } = end._lngLat;
+      const startLevel = parseInt(start._level, 10);
+      const endLevel = parseInt(end._level, 10);
+
+      // Existing direction fetching logic
+      const response = await fetch("https://osm.uwmnav.dedyn.io/api/route", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          start: {
+            lat: startLat,
+            lng: startLng,
+            level: startLevel,
+          },
+          destination: {
+            lat: endLat,
+            lng: endLng,
+            level: endLevel,
+          },
+          profile: accessible ? "wheelchair" : "foot",
+          direction: "forward",
+          max: 3600,
+        }),
+      });
+
+      // Process response and display route
       const data = await response.json();
-
-      //as long as there is a route to take we can process the data
-      if (data.features && data.features.length > 0) {
-        //splits data up into three usefull fileds
-        const route = data.features[0].geometry.coordinates; //the array of points taken from a to b
-        const distance = data.features[0].properties.summary.distance; //total distance covered
-        const duration = data.features[0].properties.summary.duration; //estimated time of travel
-
-        //pushes to the console to read, can remove after debugging.
-        console.log("Route:", route);
-        console.log("Distance:", distance, "meters");
-        console.log("Duration:", duration, "seconds");
-
-        //update the map to show the routing.
-        displayRouteOnMap(route);
-
-        //returns the three broken up sections of data as an array.
-        return { route, distance, duration };
-      } else {
-        console.error("No route found.");
-        return null;
+      if (data.features?.length) {
+        addRouteToMap(data);
       }
     } catch (error) {
       console.error("Error fetching directions:", error);
-      return null;
     }
   }
 
+  // Update when adding routes
+  function addRouteToMap(routeGEOJSON) {
+    displayRouteOnMap(routeGEOJSON);
+  }
+
   //updates map to show the routing
-  function displayRouteOnMap(routeCoordinates) {
-    //since ors returns jsom and maplibregl uses geoJSOM we need to convert it
-    const routeGeoJsonData = {
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "LineString",
-        coordinates: routeCoordinates,
-      },
-    };
-
-    //checks if we made a rout already, updates it with new geoJSON data, otherwise makes new route
+  function displayRouteOnMap(routeGEOJSON) {
+    console.log(
+      "Level types:",
+      routeGEOJSON.features.map((f) => ({
+        raw: f.properties.level,
+        parsed: parseFloat(f.properties.level),
+        type: typeof f.properties.level,
+      }))
+    );
+    // Clear previous route
     if (gl.getSource("route")) {
-      gl.getSource("route").setData(routeGeoJsonData);
-    } else {
-      //to add a route we need a source, the geojson data, and a layer, which contains the line
-      gl.addSource("route", {
-        type: "geojson",
-        data: routeGeoJsonData,
-      });
-
-      gl.addLayer({
-        id: "route",
-        type: "line",
-        source: "route",
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#3887be",
-          "line-width": 5,
-        },
-      });
+      gl.getSource("route").setData(routeGEOJSON);
     }
 
+    // Add new route source and layer
+    gl.addSource("route", {
+      type: "geojson",
+      data: routeGEOJSON,
+    });
+
+    gl.addLayer({
+      id: "route",
+      type: "line",
+      source: "route",
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+      paint: {
+        "line-color": "#3887be",
+        "line-width": 5,
+        "line-opacity": [
+          "case",
+          ["boolean", ["feature-state", "cleared"], false],
+          0.3,
+          1,
+        ],
+      },
+      filter: ["==", ["get", "level"], indoorEqual.level],
+    });
+    indoorEqual._updateRouteVisibility();
+
     //zooms in/out the map to fit the full route in the screen.
-    const bounds = routeCoordinates.reduce(
-      (bounds, coord) => bounds.extend(coord),
-      new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
-    );
-    gl.fitBounds(bounds, { padding: 20 });
+    // const bounds = routeCoordinates.reduce(
+    //   (bounds, coord) => bounds.extend(coord),
+    //   new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
+    // );
+    // gl.fitBounds(bounds, { padding: 20 });
   }
 
   function getCookie(cname) {
