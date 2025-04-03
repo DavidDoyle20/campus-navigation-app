@@ -68,14 +68,6 @@
       });
     }
 
-    toggleRouteSegments(level = this.level) {
-      this.routeSegments.forEach((segment) => {
-        segment.properties.level === level
-          ? segment.addTo(this.map)
-          : segment.remove();
-      });
-    }
-
     removeMarker(marker) {
       marker.remove();
       const index = this.markers.indexOf(marker);
