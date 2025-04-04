@@ -1,5 +1,6 @@
 /* Importing Google font - Poppins */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
 * {
   margin: 0;
   padding: 0;
@@ -8,13 +9,18 @@
 }
 
 body {
-  margin: 0;
-  padding: 0;
   overflow-x: hidden;
   font-size: 100%;
   min-height: 100vh;
   background: #f0f4ff;
 }
+
+ul {
+  list-style-type: none;
+}
+
+/* Map styles */
+
 #map-container {
   position: relative;
   height: 100vh;
@@ -99,38 +105,44 @@ body {
   transition: all 0.3s ease 0s;
   cursor: pointer;
   outline: none;
-  z-index: 9000;
+  z-index: 400;
 }
 
 #start-navigation:hover {
   background-color: #ffbd00;
   box-shadow: 0px 15px 20px rgba(229, 186, 46, 0.4);
-  color: #fff;
   transform: translateY(-7px);
-  z-index: 9000;
+  z-index: 600;
 }
 
 #start-navigation:active {
   transform: translateY(-1px);
-  z-index: 9000;
+  z-index: 600;
 }
 
+/* Sidebar */
+
 .sidebar {
+  height: 100%;
+  width: 85px;
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
-  width: 85px;
-  display: flex;
-  overflow-x: hidden;
-  flex-direction: column;
-  background: #333333;
+
   padding: 25px 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  z-index: 500;
+
+  background: #333333;
+
   transition: all 0.4s ease;
 }
 .sidebar:hover {
   width: 260px;
 }
+
 .sidebar .sidebar-header {
   display: flex;
   align-items: center;
@@ -145,34 +157,37 @@ body {
   white-space: nowrap;
   margin-left: 23px;
 }
+
+/* Sidebar links */
+
 .sidebar-links h4 {
+  position: relative;
+  height: 1lh;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
   color: #fff;
   font-weight: 500;
   white-space: nowrap;
-  margin: 10px 0;
-  position: relative;
 }
 .sidebar-links h4 span {
-  opacity: 0;
+  visibility: hidden;
+  width: 0;
+  transition: width 0.2s ease, margin-right 0.2s ease;
 }
 .sidebar:hover .sidebar-links h4 span {
-  opacity: 1;
+  visibility: visible;
+  width: 8ch; /* hack - unset, initial and *-content can't transition */
+  margin-right: 1em;
+  transition: width 0s;
 }
+
 .sidebar-links .menu-separator {
-  position: absolute;
-  left: 0;
-  top: 50%;
   width: 100%;
   height: 1px;
-  transform: scaleX(1);
-  transform: translateY(-50%);
   background: #6e5b04;
-  transform-origin: right;
-  transition-delay: 0.2s;
-}
-.sidebar:hover .sidebar-links .menu-separator {
-  transition-delay: 0s;
-  transform: scaleX(0);
 }
 .sidebar-links {
   list-style: none;
@@ -257,10 +272,6 @@ body {
 .dropdown-menu:not(.active) {
   transition: max-height 0.25s cubic-bezier(0.4, 0, 1, 1),
     opacity 0.2s ease 0.05s, visibility 0.25s ease;
-}
-
-ul {
-  list-style-type: none;
 }
 
 #bookmarks-dropdown li {
@@ -399,7 +410,9 @@ ul {
 .maplibregl-ctrl-indoorequal button.maplibregl-ctrl-active:hover {
   color: white;
 }
+
 /* Mobile optimization */
+
 @media (max-width: 768px) {
   .maplibregl-ctrl-indoorequal {
     bottom: 65px;
