@@ -53,18 +53,19 @@
       }
       const marker = new TypedMarker({}, type, level).setLngLat([lng, lat]);
       this.addMarker(marker);
-      return marker;
+      this.toggleMarkers(this.level)
     }
 
     // Toggle markers bases on level
     toggleMarkers(level = this.level) {
+      // marker levels are numbers while the inddorequal level is a string
       if (this.location) {
-        const shouldShow = this.location._level === level;
+        const shouldShow = this.location._level + "" === level;
         shouldShow ? this.location.addTo(this.map) : this.location.remove();
       }
       // Update regular markers
       this.markers.forEach((marker) => {
-        marker._level === level ? marker.addTo(this.map) : marker.remove();
+        marker._level + "" === level ? marker.addTo(this.map) : marker.remove();
       });
     }
 
@@ -120,7 +121,7 @@
       geoStart: "#007bff",
     };
 
-    constructor(options = {}, type = "none", level = 0) {
+    constructor(options = {}, type = "none", level = "0") {
       const markerElement = document.createElement("div");
       const svgContainer = document.createElement("div");
 
@@ -322,6 +323,13 @@
       url: "https://osm.uwmnav.dedyn.io",
       heatmap: false,
     });
+    // <!-- get the users current location. display it as a marker on the map. -->
+    // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
+    navigator.geolocation.watchPosition(
+      currentLocationSuccess,
+      currentLocationError,
+      { enableHighAccuracy: true }
+    );
 
     Promise.all([
       new Promise((resolve) =>
@@ -374,14 +382,6 @@
 
     window.addEventListener("resize", () => gl.resize());
     window.addEventListener("zoomevent", () => gl.resize());
-
-    // <!-- get the users current location. display it as a marker on the map. -->
-    // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
-    navigator.geolocation.watchPosition(
-      currentLocationSuccess,
-      currentLocationError,
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
   }
   document.addEventListener("DOMContentLoaded", function () {
     initMap(); // Initialize first
@@ -412,6 +412,7 @@
     accessibilityButton.classList.toggle("active");
   });
 
+  // markers are displayed on wrong levels
   async function addBookmark() {
     if (!indoorEqual.start || !indoorEqual.destination) {
       alert("Please enter a start and a destination");
