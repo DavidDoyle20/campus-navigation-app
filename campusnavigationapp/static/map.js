@@ -379,7 +379,8 @@
     // TODO: add a floor to the geo marker. Maybe based on possible levels at the coords?
     navigator.geolocation.watchPosition(
       currentLocationSuccess,
-      currentLocationError
+      currentLocationError,
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }
   document.addEventListener("DOMContentLoaded", function () {
@@ -585,13 +586,13 @@
   }
 
   function currentLocationError(err) {
-    if (err.code === 1) {
-      // <!-- user declined geolocation -->
-      console.log("Geolocation declined by user");
-    } else {
-      // <!-- could not get geolocation -->
-      console.log("Could not getgeolocation. Does your device support it?");
-    }
+    const errorMessage = {
+      1: "Please enable location access in browser settings",
+      2: "Location unavailable (check GPS/WiFi)",
+      3: "Location request timed out"
+    }[err.code] || "Geolocation error";
+
+    window.alert(errorMessage);
   }
 
   // Marker functionality
