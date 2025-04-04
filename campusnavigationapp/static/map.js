@@ -53,7 +53,8 @@
       }
       const marker = new TypedMarker({}, type, level).setLngLat([lng, lat]);
       this.addMarker(marker);
-      this.toggleMarkers(this.level)
+      this.toggleMarkers(this.level);
+      return marker;
     }
 
     // Toggle markers bases on level
@@ -412,7 +413,6 @@
     accessibilityButton.classList.toggle("active");
   });
 
-  // markers are displayed on wrong levels
   async function addBookmark() {
     if (!indoorEqual.start || !indoorEqual.destination) {
       alert("Please enter a start and a destination");
