@@ -33,7 +33,7 @@
       if (marker._type == "end") {
         this.destination = marker;
       }
-
+      //adjust if needed, should stop markers set as waypoints from being removed.
       if (this.markers.length >= this.MAX_MARKERS) {
         //find next element that is not flagged as waypoint to remove.
         for(let i =0; i<this.markers.length; i++){
