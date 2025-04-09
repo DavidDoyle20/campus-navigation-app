@@ -40,6 +40,7 @@
           if(this.markers[i] != this.markers[i]._type !="start" && this.markers[i] != this.markers._type !="end"){
                     const oldestMarker = this.markers[i];
                     this.removeMarker(oldestMarker);
+                    break;
           }
         }
 
