@@ -9,7 +9,7 @@
 
   --color-background: rgb(240, 244, 255); /*#f0f4ff;*/
   --color-primary: rgb(255, 189, 0); /*#ffbd00;*/
-  
+
   --color-ui-background: rgb(51, 51, 51); /*#333333;*/
   --color-ui-background-light: rgb(73, 73, 73); /*#494949;*/
   --color-ui-separator: rgb(110, 91, 4); /*#6e5b04;*/
@@ -441,4 +441,11 @@ ul {
     padding: 6px;
     min-width: 35px;
   }
+}
+
+/* Search Bar */
+#autocomplete {
+  width: 300px;
+  padding-top: 15px;
+  margin-left: 100px;
 }
