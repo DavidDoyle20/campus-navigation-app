@@ -113,7 +113,7 @@
               ><span class="material-symbols-outlined"> settings </span
               >Settings</a
             >
-          </li>
+        </li>
           <li>
             <a href="{% url 'logout' %}"
               ><span class="material-symbols-outlined"> logout </span>Logout</a
@@ -131,9 +131,13 @@
         Start Navigation
       </button>
     </div>
+      <!--footer for attributions. might want to add overpass, but from what I could tell it is just apart of osm -->
+    <div class="attributions">
+        <a href="https://osmfoundation.org">&copy;OpenStreetMap</a> | <a href="https://indoorequal.com/">&copy; indoor= </a> | <a href="https://maplibre.org/">&copy; MapLibre</a> | <a href="https://github.com/DavidDoyle20/osr-campusnavapp?tab=readme-ov-file">&copy;OSR</a>
+    </div>
     <script>
       window.iconUrl = "{% static 'marker-svgrepo-com.svg' %}";
     </script>
-    <script type="module" src="{% static 'map.js' %}"></script>
+   <script type="module" src="{% static 'map.js' %}"></script>
   </body>
 </html>

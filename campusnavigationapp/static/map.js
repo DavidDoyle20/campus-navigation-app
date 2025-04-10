@@ -34,10 +34,17 @@
       if (marker._type == "end") {
         this.destination = marker;
       }
-
+      //adjust if needed, should stop markers set as waypoints from being removed.
       if (this.markers.length >= this.MAX_MARKERS) {
-        const oldestMarker = this.markers.shift();
-        this.removeMarker(oldestMarker);
+        //find next element that is not flagged as waypoint to remove.
+        for(let i =0; i<this.markers.length; i++){
+          if(this.markers[i]._type !="start" && this.markers[i]._type !="end"){
+            const oldestMarker = this.markers[i];
+            this.removeMarker(oldestMarker);
+            break;
+          }
+        }
+
       }
       this.markers.push(marker);
       marker.addTo(this.map);
@@ -285,6 +292,7 @@
       }
 
       // Add event listeners
+      //todo when setting start and end postion, update floor level color to keep track of markers. will also need reset as markers are updated.
       popupContent.querySelectorAll("button").forEach((button) => {
         button.addEventListener("click", (e) => {
           switch (e.target.id) {
