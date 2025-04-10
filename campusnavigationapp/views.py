@@ -81,23 +81,52 @@ class DomainRestrictedLoginView(Login):
             response.set_cookie(cookie_name, magiclink.cookie_value)
             log.info(f'Cookie {cookie_name} set for {email}')
         return response
-    
+
+
+def get_nullable_float(post_data, key):
+    value = post_data.get(key)
+    print(value)
+    if value is None or value == '':
+        return None
+    try:
+        return float(value)
+    except (TypeError):
+         raise ValidationError(f"Unexpected type for '{key}': '{value}'")
+
+def get_nullable_integer(post_data, key):
+    value = post_data.get(key)
+    if value is None or value == '':
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        raise ValidationError(f"Invalid integer value provided for '{key}': '{value}'. Must be a whole number.")
+
 @login_required
 def save_bookmark(request):
     if request.method == 'POST':
         try:
+            start_level_val = get_nullable_integer(request.POST, "start_level")
+            start_lat_val = get_nullable_float(request.POST, "start_lat")
+            start_lng_val = get_nullable_float(request.POST, "start_lng")
+            end_level_val = get_nullable_integer(request.POST, "end_level")
+            end_lat_val = get_nullable_float(request.POST, "end_lat")
+            end_lng_val = get_nullable_float(request.POST, "end_lng")
+
             bookmark = Bookmark.objects.create(
                 user=request.user,
                 name=request.POST.get('name', 'Unnamed Route'),
-                start_level=request.POST["start_level"],
-                start_lat=request.POST["start_lat"],
-                start_lng=request.POST["start_lng"],
-                end_level=request.POST["end_level"],
-                end_lat=request.POST["end_lat"],
-                end_lng=request.POST["end_lng"] 
+                start_level=start_level_val,
+                start_lat=start_lat_val,
+                start_lng=start_lng_val,
+                end_level=end_level_val,
+                end_lat=end_lat_val,
+                end_lng=end_lng_val
             )
+            print(bookmark)
             return JsonResponse({'status': 'success', 'id': bookmark.id})
         except Exception as e:
+            print(e)
             return JsonResponse({'status': 'error', 'message': str(e)}) 
 
 @login_required
@@ -105,45 +134,46 @@ def get_bookmarks(request, bookmark_id=None):
     if bookmark_id:
         try:
             bookmark = Bookmark.objects.get(user=request.user, id=bookmark_id)
-            return JsonResponse({
-                'bookmark': {
-                    'id': bookmark.id,
-                    'name': bookmark.name,
-                    'start_level': bookmark.start_level,
-                    'start_lat': float(bookmark.start_lat),
-                    'start_lng': float(bookmark.start_lng),
-                    'end_level': bookmark.end_level,
-                    'end_lat': float(bookmark.end_lat) if bookmark.end_lat else None,
-                    'end_lng': float(bookmark.end_lng) if bookmark.end_lng else None,
-                    'created_at': bookmark.created_at.strftime('%Y-%m-%d %H:%M')
-                }
-            })
+            bookmark_data = {
+                'id': bookmark.id,
+                'name': bookmark.name,
+                'start_level': getattr(bookmark, 'start_level', None),
+                'start_lat': getattr(bookmark, 'start_lat', None),
+                'start_lng': getattr(bookmark, 'start_lng', None),
+                'end_level': getattr(bookmark, 'end_level', None),
+                'end_lat': getattr(bookmark, 'end_lat', None),
+                'end_lng': getattr(bookmark, 'end_lng', None),
+                'created_at': bookmark.created_at.strftime('%Y-%m-%d %H:%M') if bookmark.created_at else None
+            }
+            response_data = {'bookmark': bookmark_data}
+
+            return JsonResponse(response_data)
         except Bookmark.DoesNotExist:
             raise Http404("Bookmark not found")
 
     bookmarks = Bookmark.objects.filter(user=request.user).order_by('-created_at')
-    print(bookmarks)
     return JsonResponse({
         'bookmarks': [
             {
                 'id': b.id,
                 'name': b.name,
-                'start_level': b.start_level,
-                'start_lat': float(b.start_lat),
-                'start_lng': float(b.start_lng),
-                'end_level': b.end_level,
-                'end_lat': float(b.end_lat) if b.end_lat else None,
-                'end_lng': float(b.end_lng) if b.end_lng else None,
-                'created_at': b.created_at.strftime('%Y-%m-%d %H:%M')
+                'start_level': getattr(b, 'start_level', None),
+                'start_lat': getattr(b, 'start_lat', None),
+                'start_lng': getattr(b, 'start_lng', None),
+                'end_level': getattr(b, 'end_level', None),
+                'end_lat': getattr(b, 'end_lat', None),
+                'end_lng': getattr(b, 'end_lng', None),
+                'created_at': b.created_at.strftime('%Y-%m-%d %H:%M') if b.created_at else None
             } for b in bookmarks
         ]
     })
 
 @login_required
 def delete_bookmark(request, bookmark_id):
-    print(request)
-    try:
-        Bookmark.objects.get(id=bookmark_id, user=request.user).delete()
-        return JsonResponse({'status': 'success'})
-    except Bookmark.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Bookmark not found'})
+    if (request.method == "DELETE"):
+        print(request)
+        try:
+            Bookmark.objects.get(id=bookmark_id, user=request.user).delete()
+            return JsonResponse({'status': 'success'})
+        except Bookmark.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Bookmark not found'})
