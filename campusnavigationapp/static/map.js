@@ -37,10 +37,10 @@
       if (this.markers.length >= this.MAX_MARKERS) {
         //find next element that is not flagged as waypoint to remove.
         for(let i =0; i<this.markers.length; i++){
-          if(this.markers[i] != this.markers[i]._type !="start" && this.markers[i] != this.markers._type !="end"){
-                    const oldestMarker = this.markers[i];
-                    this.removeMarker(oldestMarker);
-                    break;
+          if(this.markers[i]._type !="start" && this.markers[i]._type !="end"){
+            const oldestMarker = this.markers[i];
+            this.removeMarker(oldestMarker);
+            break;
           }
         }
 
