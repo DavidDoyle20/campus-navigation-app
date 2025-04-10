@@ -25,6 +25,9 @@
       }
       // remove color from geo
       if (marker._type == "start") {
+        if (this.start) {
+          this.start.setType("none");
+        }
         this.start = marker;
         // Update geo marker if it was the start
         if (this.location._type === "geoStart") {
@@ -32,19 +35,24 @@
         }
       }
       if (marker._type == "end") {
+        if (this.destination) {
+          this.destination.setType("none");
+        }
         this.destination = marker;
       }
       //adjust if needed, should stop markers set as waypoints from being removed.
       if (this.markers.length >= this.MAX_MARKERS) {
         //find next element that is not flagged as waypoint to remove.
-        for(let i =0; i<this.markers.length; i++){
-          if(this.markers[i]._type !="start" && this.markers[i]._type !="end"){
+        for (let i = 0; i < this.markers.length; i++) {
+          if (
+            this.markers[i]._type != "start" &&
+            this.markers[i]._type != "end"
+          ) {
             const oldestMarker = this.markers[i];
             this.removeMarker(oldestMarker);
             break;
           }
         }
-
       }
       this.markers.push(marker);
       marker.addTo(this.map);
@@ -54,7 +62,7 @@
 
     createAndAddMarker(lng, lat, type = "none", level = 0) {
       if (typeof lng !== "number" || typeof lat !== "number") {
-        throw new Error("Invalid coordinates");
+        throw new Error("Invalid coordinates", lng, lat);
       }
       if (!TypedMarker.VALID_TYPES.has(type)) {
         type = "none";
@@ -432,8 +440,8 @@
   });
 
   async function addBookmark() {
-    if (!indoorEqual.start || !indoorEqual.destination) {
-      alert("Please enter a start and a destination");
+    if (!indoorEqual.start && !indoorEqual.destination) {
+      alert("Please enter a start or a destination");
       console.log("Missing start or destination");
       return;
     }
@@ -447,12 +455,16 @@
 
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("start_level", indoorEqual.start._level);
-    formData.append("start_lng", indoorEqual.start._lngLat.lng);
-    formData.append("start_lat", indoorEqual.start._lngLat.lat);
-    formData.append("end_level", indoorEqual.destination._level);
-    formData.append("end_lng", indoorEqual.destination._lngLat.lng);
-    formData.append("end_lat", indoorEqual.destination._lngLat.lat);
+    if (indoorEqual.start) {
+      formData.append("start_level", indoorEqual.start._level);
+      formData.append("start_lng", indoorEqual.start._lngLat.lng);
+      formData.append("start_lat", indoorEqual.start._lngLat.lat);
+    }
+    if (indoorEqual.destination) {
+      formData.append("end_level", indoorEqual.destination._level);
+      formData.append("end_lng", indoorEqual.destination._lngLat.lng);
+      formData.append("end_lat", indoorEqual.destination._lngLat.lat);
+    }
 
     if (!name) return;
 
@@ -481,51 +493,82 @@
       const data = await response.json();
       const dropdown = document.getElementById("bookmarks-dropdown");
 
-      dropdown.innerHTML = data.bookmarks
-        .map(
-          (bookmark) => `
-        <li data-bookmark-id="${bookmark.id}">
+      // Clear existing content safely
+      dropdown.replaceChildren();
+
+      data.bookmarks.forEach((bookmark) => {
+        const li = document.createElement("li");
+        li.dataset.bookmarkId = bookmark.id;
+        li.innerHTML = `
           <div class="bookmark-item">
             <span class="button-primary">${bookmark.name}</span>
-          </div> 
-        </li>
-      `
-        )
-        .join("");
-      // Add event listeners
-      dropdown.querySelectorAll(".button-primary").forEach((button) => {
-        button.addEventListener("click", async (e) => {
-          const listItem = e.target.closest("li");
-          const bookmarkId = listItem.dataset.bookmarkId;
+            <button class="button-delete">❌</button>
+          </div>
+            `;
+        dropdown.appendChild(li);
+      });
+    } catch (error) {
+      console.error("Error loading bookmarks:", error);
+    }
+  }
 
-          try {
-            // place bookmark coordinates on map
-            const response = await fetch(`/bookmarks/${bookmarkId}/`);
-            const { bookmark } = await response.json();
+  // Outside of loadbookmarks
+  document
+    .getElementById("bookmarks-dropdown")
+    .addEventListener("click", async (e) => {
+      const listItem = e.target.closest("li");
+      const bookmarkId = listItem.dataset.bookmarkId;
 
-            const startMarker = indoorEqual.createAndAddMarker(
+      // Handle delete button click
+      if (e.target.classList.contains("button-delete")) {
+        e.preventDefault();
+        try {
+          const response = await fetch(`/bookmarks/delete/${bookmarkId}/`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            listItem.remove();
+            console.log("Bookmark deleted successfully");
+          } else {
+            console.error("Delete failed:", await response.json());
+          }
+        } catch (error) {
+          console.error("Delete error:", error);
+        }
+        return;
+      }
+
+      if (e.target.classList.contains("bookmark-item")) {
+        try {
+          const response = await fetch(`/bookmarks/${bookmarkId}/`);
+          const { bookmark } = await response.json();
+
+          if (bookmark.start_level !== null) {
+            indoorEqual.createAndAddMarker(
               bookmark.start_lng,
               bookmark.start_lat,
               "start",
               bookmark.start_level
             );
-            const endMarker = indoorEqual.createAndAddMarker(
+          }
+          if (bookmark.end_level !== null) {
+            indoorEqual.createAndAddMarker(
               bookmark.end_lng,
               bookmark.end_lat,
               "end",
               bookmark.end_level
             );
-
-            console.log(indoorEqual.markers);
-          } catch (error) {
-            console.error("Error loading bookmark: ", error);
           }
-        });
-      });
-    } catch (error) {
-      console.error("Error loading bookmarks: ", error);
-    }
-  }
+        } catch (error) {
+          console.error("Error loading bookmark:", error);
+        }
+      }
+    });
 
   // Sidebar controls
   const sidebar = document.querySelector(".sidebar");
@@ -623,7 +666,7 @@
   // Function to update the visibility of the Start button
   function updateStartButtonVisibility() {
     const startButton = document.getElementById("start-navigation");
-    if (indoorEqual.start && indoorEqual.destination) {
+    if (indoorEqual.start && indoorEqual.destination && !isRouteDisplayed()) {
       startButton.style.display = "block";
     } else {
       startButton.style.display = "none";
@@ -753,6 +796,7 @@
       filter: ["==", ["get", "level"], indoorEqual.level],
     });
     indoorEqual._updateRouteVisibility();
+    updateStartButtonVisibility();
 
     //zooms in/out the map to fit the full route in the screen.
     // const bounds = routeCoordinates.reduce(
@@ -760,6 +804,10 @@
     //   new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
     // );
     // gl.fitBounds(bounds, { padding: 20 });
+  }
+
+  function isRouteDisplayed() {
+    return gl.getSource("route") && gl.getLayer("route");
   }
 
   function getCookie(cname) {
@@ -931,7 +979,7 @@
     onSubmit: (result) => {
       name = result;
       const inputBox = document.querySelector("#building-search");
-      console.log(`Selected item: ${name}`); // Example action on submit
+      console.log(`Selected item: ${name}`);
     },
   });
 
