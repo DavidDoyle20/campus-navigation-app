@@ -282,6 +282,7 @@
       }
 
       // Add event listeners
+      //todo when setting start and end postion, update floor level color to keep track of markers. will also need reset as markers are updated.
       popupContent.querySelectorAll("button").forEach((button) => {
         button.addEventListener("click", (e) => {
           switch (e.target.id) {
