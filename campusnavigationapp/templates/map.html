@@ -34,10 +34,17 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
     />
+    <link   
+      rel="stylesheet"   
+      href="https://unpkg.com/@trevoreyre/autocomplete-js/dist/style.css" 
+    />
 
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/maplibre-gl-indoorequal@latest/dist/maplibre-gl-indoorequal.umd.min.js"></script>
     <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+    <script src="https://unpkg.com/@trevoreyre/autocomplete-js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 
 
     <link href="{% static 'styles.css' %}" rel="stylesheet" type="text/css" />
@@ -81,7 +88,7 @@
             </a>
           </li>
           <li>
-            <a href="#"
+            <a href="#" class="history"
               ><span class="material-symbols-outlined"> history </span
               >History</a
             >
@@ -114,6 +121,12 @@
           </li>
         </ul>
       </aside>
+
+      <div id="autocomplete" class="autocomplete">
+        <input id="building-search" class="autocomplete-input" />
+        <ul  id="ull" class="autocomplete-result-list"></ul>
+      </div>
+
       <button id="start-navigation" style="display: none">
         Start Navigation
       </button>
@@ -122,6 +135,5 @@
       window.iconUrl = "{% static 'marker-svgrepo-com.svg' %}";
     </script>
     <script type="module" src="{% static 'map.js' %}"></script>
-    <script></script>
   </body>
 </html>

@@ -13,6 +13,7 @@
       this.start = null;
       this.destination = null;
       this.location = null;
+      this.roomLayers = new Map();
     }
 
     addMarker(marker) {
@@ -91,6 +92,7 @@
       this.toggleMarkers(level);
       this._emitLevelChange();
       this._updateRouteVisibility();
+      this._updateRoomVisibility();
     }
 
     removeRoute() {
@@ -109,6 +111,14 @@
           parseInt(this.level, 10),
         ]);
       }
+    }
+
+    _updateRoomVisibility() {
+      // Toggle all room layers' visibility
+      this.roomLayers.forEach((level, layerId) => {
+        const visibility = level === this.level ? "visible" : "none";
+        this.map.setLayoutProperty(layerId, "visibility", visibility);
+      });
     }
   }
 
@@ -587,11 +597,12 @@
   }
 
   function currentLocationError(err) {
-    const errorMessage = {
-      1: "Please enable location access in browser settings",
-      2: "Location unavailable (check GPS/WiFi)",
-      3: "Location request timed out"
-    }[err.code] || "Geolocation error";
+    const errorMessage =
+      {
+        1: "Please enable location access in browser settings",
+        2: "Location unavailable (check GPS/WiFi)",
+        3: "Location request timed out",
+      }[err.code] || "Geolocation error";
 
     window.alert(errorMessage);
   }
@@ -758,4 +769,169 @@
     }
     return "";
   }
+
+  // function to be called from search bar
+  async function search(address) {
+    const arr = address.split(",");
+    if (arr.length < 2) {
+      return;
+    }
+    const building_name = arr[0].trim();
+    const room_number = arr[1].trim();
+    const response = await fetch("https://osm.uwmnav.dedyn.io/v1/find-room", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        building: building_name,
+        room: room_number,
+      }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+    displayRoom(data);
+  }
+
+  function displayRoom(data) {
+    indoorEqual.roomLayers.forEach((_, layerId) => {
+      if (gl.getLayer(layerId)) {
+        gl.removeLayer(layerId);
+      }
+    });
+    indoorEqual.roomLayers.clear();
+
+    if (gl.getSource("room-data")) {
+      gl.removeSource("room-data");
+    }
+
+    const coordinates = data.nodes.map((node) => [
+      node.longitude,
+      node.latitude,
+    ]);
+
+    // Ensure polygon is closed
+    if (
+      JSON.stringify(coordinates[0]) !==
+      JSON.stringify(coordinates[coordinates.length - 1])
+    ) {
+      coordinates.push(coordinates[0]);
+    }
+
+    // Create unique layer IDs with level prefix
+    const levelPrefix = `level-${data.tags.level}-`;
+    const fillLayerId = `${levelPrefix}fill-${data.osm_id}`;
+    const borderLayerId = `${levelPrefix}border-${data.osm_id}`;
+
+    // Store layer-level relationships
+    indoorEqual.roomLayers.set(fillLayerId, data.tags.level);
+    indoorEqual.roomLayers.set(borderLayerId, data.tags.level);
+
+    gl.addSource("room-data", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: {
+              type: "Polygon",
+              coordinates: [coordinates],
+            },
+          },
+        ],
+      },
+    });
+
+    gl.addLayer({
+      id: fillLayerId,
+      type: "fill",
+      source: "room-data",
+      paint: {
+        "fill-color": "#3388ff",
+        "fill-opacity": 0.5,
+      },
+    });
+
+    gl.addLayer({
+      id: borderLayerId,
+      type: "line",
+      source: "room-data",
+      paint: {
+        "line-color": "#3388ff",
+        "line-width": 2,
+      },
+    });
+
+    // Set initial visibility
+    indoorEqual.setLevel(data.tags.level);
+    indoorEqual.createAndAddMarker(
+      data.longitude,
+      data.latitude,
+      "none",
+      data.tags.level
+    );
+
+    // Zoom to room
+    const bounds = coordinates.reduce(
+      (acc, coord) => acc.extend(coord),
+      new maplibregl.LngLatBounds(coordinates[0], coordinates[0])
+    );
+    gl.fitBounds(bounds, { padding: 20, maxZoom: 21 });
+  }
+
+  let name; // Global variable to store the selected name
+  const buildings = [
+    "Engineering & Mathematical Sciences Building",
+    "Lapham Hall",
+    "Lubar Hall",
+    "Physics Building",
+    "J. Martin Klotsche Center",
+    "Pearse Hall",
+    "Garland Hall",
+    "Vogel Hall",
+    "Curtin Hall",
+    "Mitchell Hall",
+    "Arts Center Lecture Hall",
+    "Mellencamp Hall",
+    "Theatre Building",
+    "Music Building",
+    "Art Building",
+    "UWM Student Union",
+    "Bolton Hall",
+    "Golda Meir Library",
+    "Kenwood Interdisciplinary Research Complex",
+    "Chemistry Building",
+  ];
+
+  new Autocomplete("#autocomplete", {
+    search: (input) => {
+      return new Promise((resolve) => {
+        if (!input) {
+          resolve([]);
+          return;
+        }
+        const lowerCaseInput = input.toLowerCase();
+        const filteredResults = buildings.filter((item) =>
+          item.toLowerCase().startsWith(lowerCaseInput)
+        );
+        resolve(filteredResults);
+      });
+    },
+
+    onSubmit: (result) => {
+      name = result;
+      const inputBox = document.querySelector("#building-search");
+      console.log(`Selected item: ${name}`); // Example action on submit
+    },
+  });
+
+  $("#building-search").on("keyup", function (e) {
+    if (e.key === "Enter" || e.keyCode === 13) {
+      name = document.querySelector("#building-search").value;
+      console.log(`Searching address: ${name}`);
+      search(name);
+    }
+  });
 })();
