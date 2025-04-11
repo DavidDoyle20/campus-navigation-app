@@ -97,6 +97,14 @@
       this._updateFilters();
       this.toggleMarkers(level);
       this._emitLevelChange();
+      //a little janky but this hilights floors that have markers set on them.
+      for(let i = 0; i < this._control.$el.children.length; i++) {
+        for(let j = 0; j< this.markers.length; j++){
+          if((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == i){
+            this._control.$el.children[(this._control.$el.children.length-1) - i].style.background = '#007ffb';
+          }
+        }
+      }
       this._updateRouteVisibility();
     }
 
