@@ -13,6 +13,7 @@
       this.start = null;
       this.destination = null;
       this.location = null;
+      this.roomLayers = new Map();
     }
 
     addMarker(marker) {
@@ -24,6 +25,9 @@
       }
       // remove color from geo
       if (marker._type == "start") {
+        if (this.start) {
+          this.start.setType("none");
+        }
         this.start = marker;
         // Update geo marker if it was the start
         if (this.location._type === "geoStart") {
@@ -31,19 +35,24 @@
         }
       }
       if (marker._type == "end") {
+        if (this.destination) {
+          this.destination.setType("none");
+        }
         this.destination = marker;
       }
       //adjust if needed, should stop markers set as waypoints from being removed.
       if (this.markers.length >= this.MAX_MARKERS) {
         //find next element that is not flagged as waypoint to remove.
-        for(let i =0; i<this.markers.length; i++){
-          if(this.markers[i]._type !="start" && this.markers[i]._type !="end"){
+        for (let i = 0; i < this.markers.length; i++) {
+          if (
+            this.markers[i]._type != "start" &&
+            this.markers[i]._type != "end"
+          ) {
             const oldestMarker = this.markers[i];
             this.removeMarker(oldestMarker);
             break;
           }
         }
-
       }
       this.markers.push(marker);
       marker.addTo(this.map);
@@ -53,7 +62,7 @@
 
     createAndAddMarker(lng, lat, type = "none", level = 0) {
       if (typeof lng !== "number" || typeof lat !== "number") {
-        throw new Error("Invalid coordinates");
+        throw new Error("Invalid coordinates", lng, lat);
       }
       if (!TypedMarker.VALID_TYPES.has(type)) {
         type = "none";
@@ -97,17 +106,22 @@
       this._updateFilters();
       this.toggleMarkers(level);
       this._emitLevelChange();
+      this._updateRouteVisibility();
+      this._updateFloorColor();
+      this._updateRoomVisibility();
+    }
+
+    _updateFloorColor() {
       //a little janky but this hilights floors that have markers set on them.
-      for(let i = 0; i < this._control.$el.children.length; i++) {
-        for(let j = 0; j< this.markers.length; j++){
-          if((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == this._control.$el.children[i].innerText){
+      for (let i = 0; i < this._control.$el.children.length; i++) {
+        for (let j = 0; j < this.markers.length; j++) {
+          if ((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == this._control.$el.children[i].innerText) {
             this._control.$el.children[i].style.background = '#007ffb';
           }
         }
-         if(this._control.$el.children[i].className == "maplibregl-ctrl-active")
-             this._control.$el.children[i].style.background = '#ffbd00';
+        if (this._control.$el.children[i].className == "maplibregl-ctrl-active")
+          this._control.$el.children[i].style.background = '#ffbd00';
       }
-      this._updateRouteVisibility();
     }
 
     removeRoute() {
@@ -126,6 +140,14 @@
           parseInt(this.level, 10),
         ]);
       }
+    }
+
+    _updateRoomVisibility() {
+      // Toggle all room layers' visibility
+      this.roomLayers.forEach((level, layerId) => {
+        const visibility = level === this.level ? "visible" : "none";
+        this.map.setLayoutProperty(layerId, "visibility", visibility);
+      });
     }
   }
 
@@ -432,8 +454,8 @@
   });
 
   async function addBookmark() {
-    if (!indoorEqual.start || !indoorEqual.destination) {
-      alert("Please enter a start and a destination");
+    if (!indoorEqual.start && !indoorEqual.destination) {
+      alert("Please enter a start or a destination");
       console.log("Missing start or destination");
       return;
     }
@@ -447,12 +469,16 @@
 
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("start_level", indoorEqual.start._level);
-    formData.append("start_lng", indoorEqual.start._lngLat.lng);
-    formData.append("start_lat", indoorEqual.start._lngLat.lat);
-    formData.append("end_level", indoorEqual.destination._level);
-    formData.append("end_lng", indoorEqual.destination._lngLat.lng);
-    formData.append("end_lat", indoorEqual.destination._lngLat.lat);
+    if (indoorEqual.start) {
+      formData.append("start_level", indoorEqual.start._level);
+      formData.append("start_lng", indoorEqual.start._lngLat.lng);
+      formData.append("start_lat", indoorEqual.start._lngLat.lat);
+    }
+    if (indoorEqual.destination) {
+      formData.append("end_level", indoorEqual.destination._level);
+      formData.append("end_lng", indoorEqual.destination._lngLat.lng);
+      formData.append("end_lat", indoorEqual.destination._lngLat.lat);
+    }
 
     if (!name) return;
 
@@ -481,51 +507,82 @@
       const data = await response.json();
       const dropdown = document.getElementById("bookmarks-dropdown");
 
-      dropdown.innerHTML = data.bookmarks
-        .map(
-          (bookmark) => `
-        <li data-bookmark-id="${bookmark.id}">
+      // Clear existing content safely
+      dropdown.replaceChildren();
+
+      data.bookmarks.forEach((bookmark) => {
+        const li = document.createElement("li");
+        li.dataset.bookmarkId = bookmark.id;
+        li.innerHTML = `
           <div class="bookmark-item">
             <span class="button-primary">${bookmark.name}</span>
-          </div> 
-        </li>
-      `
-        )
-        .join("");
-      // Add event listeners
-      dropdown.querySelectorAll(".button-primary").forEach((button) => {
-        button.addEventListener("click", async (e) => {
-          const listItem = e.target.closest("li");
-          const bookmarkId = listItem.dataset.bookmarkId;
+            <button class="button-delete">❌</button>
+          </div>
+            `;
+        dropdown.appendChild(li);
+      });
+    } catch (error) {
+      console.error("Error loading bookmarks:", error);
+    }
+  }
 
-          try {
-            // place bookmark coordinates on map
-            const response = await fetch(`/bookmarks/${bookmarkId}/`);
-            const { bookmark } = await response.json();
+  // Outside of loadbookmarks
+  document
+    .getElementById("bookmarks-dropdown")
+    .addEventListener("click", async (e) => {
+      const listItem = e.target.closest("li");
+      const bookmarkId = listItem.dataset.bookmarkId;
 
-            const startMarker = indoorEqual.createAndAddMarker(
+      // Handle delete button click
+      if (e.target.classList.contains("button-delete")) {
+        e.preventDefault();
+        try {
+          const response = await fetch(`/bookmarks/delete/${bookmarkId}/`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCookie("csrftoken"),
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            listItem.remove();
+            console.log("Bookmark deleted successfully");
+          } else {
+            console.error("Delete failed:", await response.json());
+          }
+        } catch (error) {
+          console.error("Delete error:", error);
+        }
+        return;
+      }
+
+      if (e.target.classList.contains("bookmark-item")) {
+        try {
+          const response = await fetch(`/bookmarks/${bookmarkId}/`);
+          const { bookmark } = await response.json();
+
+          if (bookmark.start_level !== null) {
+            indoorEqual.createAndAddMarker(
               bookmark.start_lng,
               bookmark.start_lat,
               "start",
               bookmark.start_level
             );
-            const endMarker = indoorEqual.createAndAddMarker(
+          }
+          if (bookmark.end_level !== null) {
+            indoorEqual.createAndAddMarker(
               bookmark.end_lng,
               bookmark.end_lat,
               "end",
               bookmark.end_level
             );
-
-            console.log(indoorEqual.markers);
-          } catch (error) {
-            console.error("Error loading bookmark: ", error);
           }
-        });
-      });
-    } catch (error) {
-      console.error("Error loading bookmarks: ", error);
-    }
-  }
+        } catch (error) {
+          console.error("Error loading bookmark:", error);
+        }
+      }
+    });
 
   // Sidebar controls
   const sidebar = document.querySelector(".sidebar");
@@ -605,11 +662,12 @@
   }
 
   function currentLocationError(err) {
-    const errorMessage = {
-      1: "Please enable location access in browser settings",
-      2: "Location unavailable (check GPS/WiFi)",
-      3: "Location request timed out"
-    }[err.code] || "Geolocation error";
+    const errorMessage =
+      {
+        1: "Please enable location access in browser settings",
+        2: "Location unavailable (check GPS/WiFi)",
+        3: "Location request timed out",
+      }[err.code] || "Geolocation error";
 
     window.alert(errorMessage);
   }
@@ -622,7 +680,7 @@
   // Function to update the visibility of the Start button
   function updateStartButtonVisibility() {
     const startButton = document.getElementById("start-navigation");
-    if (indoorEqual.start && indoorEqual.destination) {
+    if (indoorEqual.start && indoorEqual.destination && !isRouteDisplayed()) {
       startButton.style.display = "block";
     } else {
       startButton.style.display = "none";
@@ -752,6 +810,7 @@
       filter: ["==", ["get", "level"], indoorEqual.level],
     });
     indoorEqual._updateRouteVisibility();
+    updateStartButtonVisibility();
 
     //zooms in/out the map to fit the full route in the screen.
     // const bounds = routeCoordinates.reduce(
@@ -759,6 +818,10 @@
     //   new maplibregl.LngLatBounds(routeCoordinates[0], routeCoordinates[0])
     // );
     // gl.fitBounds(bounds, { padding: 20 });
+  }
+
+  function isRouteDisplayed() {
+    return gl.getSource("route") && gl.getLayer("route");
   }
 
   function getCookie(cname) {
@@ -776,4 +839,169 @@
     }
     return "";
   }
+
+  // function to be called from search bar
+  async function search(address) {
+    const arr = address.split(",");
+    if (arr.length < 2) {
+      return;
+    }
+    const building_name = arr[0].trim();
+    const room_number = arr[1].trim();
+    const response = await fetch("https://osm.uwmnav.dedyn.io/v1/find-room", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        building: building_name,
+        room: room_number,
+      }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+    displayRoom(data);
+  }
+
+  function displayRoom(data) {
+    indoorEqual.roomLayers.forEach((_, layerId) => {
+      if (gl.getLayer(layerId)) {
+        gl.removeLayer(layerId);
+      }
+    });
+    indoorEqual.roomLayers.clear();
+
+    if (gl.getSource("room-data")) {
+      gl.removeSource("room-data");
+    }
+
+    const coordinates = data.nodes.map((node) => [
+      node.longitude,
+      node.latitude,
+    ]);
+
+    // Ensure polygon is closed
+    if (
+      JSON.stringify(coordinates[0]) !==
+      JSON.stringify(coordinates[coordinates.length - 1])
+    ) {
+      coordinates.push(coordinates[0]);
+    }
+
+    // Create unique layer IDs with level prefix
+    const levelPrefix = `level-${data.tags.level}-`;
+    const fillLayerId = `${levelPrefix}fill-${data.osm_id}`;
+    const borderLayerId = `${levelPrefix}border-${data.osm_id}`;
+
+    // Store layer-level relationships
+    indoorEqual.roomLayers.set(fillLayerId, data.tags.level);
+    indoorEqual.roomLayers.set(borderLayerId, data.tags.level);
+
+    gl.addSource("room-data", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: {
+              type: "Polygon",
+              coordinates: [coordinates],
+            },
+          },
+        ],
+      },
+    });
+
+    gl.addLayer({
+      id: fillLayerId,
+      type: "fill",
+      source: "room-data",
+      paint: {
+        "fill-color": "#3388ff",
+        "fill-opacity": 0.5,
+      },
+    });
+
+    gl.addLayer({
+      id: borderLayerId,
+      type: "line",
+      source: "room-data",
+      paint: {
+        "line-color": "#3388ff",
+        "line-width": 2,
+      },
+    });
+
+    // Set initial visibility
+    indoorEqual.setLevel(data.tags.level);
+    indoorEqual.createAndAddMarker(
+      data.longitude,
+      data.latitude,
+      "none",
+      data.tags.level
+    );
+
+    // Zoom to room
+    const bounds = coordinates.reduce(
+      (acc, coord) => acc.extend(coord),
+      new maplibregl.LngLatBounds(coordinates[0], coordinates[0])
+    );
+    gl.fitBounds(bounds, { padding: 20, maxZoom: 21 });
+  }
+
+  let name; // Global variable to store the selected name
+  const buildings = [
+    "Engineering & Mathematical Sciences Building",
+    "Lapham Hall",
+    "Lubar Hall",
+    "Physics Building",
+    "J. Martin Klotsche Center",
+    "Pearse Hall",
+    "Garland Hall",
+    "Vogel Hall",
+    "Curtin Hall",
+    "Mitchell Hall",
+    "Arts Center Lecture Hall",
+    "Mellencamp Hall",
+    "Theatre Building",
+    "Music Building",
+    "Art Building",
+    "UWM Student Union",
+    "Bolton Hall",
+    "Golda Meir Library",
+    "Kenwood Interdisciplinary Research Complex",
+    "Chemistry Building",
+  ];
+
+  new Autocomplete("#autocomplete", {
+    search: (input) => {
+      return new Promise((resolve) => {
+        if (!input) {
+          resolve([]);
+          return;
+        }
+        const lowerCaseInput = input.toLowerCase();
+        const filteredResults = buildings.filter((item) =>
+          item.toLowerCase().startsWith(lowerCaseInput)
+        );
+        resolve(filteredResults);
+      });
+    },
+
+    onSubmit: (result) => {
+      name = result;
+      const inputBox = document.querySelector("#building-search");
+      console.log(`Selected item: ${name}`);
+    },
+  });
+
+  $("#building-search").on("keyup", function (e) {
+    if (e.key === "Enter" || e.keyCode === 13) {
+      name = document.querySelector("#building-search").value;
+      console.log(`Searching address: ${name}`);
+      search(name);
+    }
+  });
 })();
