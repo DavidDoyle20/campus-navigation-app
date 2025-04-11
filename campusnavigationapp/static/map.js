@@ -106,6 +106,7 @@
       this._updateFilters();
       this.toggleMarkers(level);
       this._emitLevelChange();
+<<<<<<< HEAD
       this._updateRouteVisibility();
       this._updateFloorColor();
       this._updateRoomVisibility();
@@ -152,6 +153,37 @@
         if (this._control.$el.children[i].className == "maplibregl-ctrl-active")
           this._control.$el.children[i].style.background = '#ffbd00';
       }
+=======
+      //a little janky but this hilights floors that have markers set on them.
+      for (let i = 0; i < this._control.$el.children.length; i++) {
+        for (let j = 0; j < this.markers.length; j++) {
+          if (
+            (this.markers[j]._type == "start" ||
+              this.markers[j]._type == "end") &&
+            this.markers[j]._level == i
+          ) {
+            this._control.$el.children[
+              this._control.$el.children.length - 1 - i
+            ].style.background = "#007ffb";
+          }
+        }
+      }
+      //a little janky but this hilights floors that have markers set on them.
+      for (let i = 0; i < this._control.$el.children.length; i++) {
+        for (let j = 0; j < this.markers.length; j++) {
+          if (
+            (this.markers[j]._type == "start" ||
+              this.markers[j]._type == "end") &&
+            this.markers[j]._level == i
+          ) {
+            this._control.$el.children[
+              this._control.$el.children.length - 1 - i
+            ].style.background = "#007ffb";
+          }
+        }
+      }
+      this._updateRouteVisibility();
+>>>>>>> 3f83cdd (resolved merge conflicts)
     }
 
     removeRoute() {
@@ -350,6 +382,10 @@
           switch (e.target.id) {
             case "set-start":
               this.setType("start");
+              var ele = document.getElementsByClassName(
+                "maplibregl-ctrl-active"
+              );
+              ele[0].style.background = "#007ffb";
               break;
             case "set-destination":
               this.setType("end");
