@@ -105,6 +105,7 @@
           }
         }
       }
+      document.getElementById('maplibregl-ctrl-active').style.background = '#ffbd00';
       this._updateRouteVisibility();
     }
 
