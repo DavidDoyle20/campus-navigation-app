@@ -280,7 +280,7 @@
 
       switch (this._type) {
         case "start":
-          popupHTML = `<button id="remove-marker">Remove Marker</button><button id="set-dest">Set Destination</button>`;
+          popupHTML = `<button id="remove-marker">Remove Marker</button><button id="set-destination">Set Destination</button>`;
           break;
         case "end":
           popupHTML = `<button id="remove-marker">Remove Marker</button><button id="set-start">Set Start</button>`;
@@ -423,6 +423,14 @@
 
     window.addEventListener("resize", () => gl.resize());
     window.addEventListener("zoomevent", () => gl.resize());
+
+    let gyroscope = new Gyroscope({ frequence: 60 })
+    gyroscope.addEventListener("reading", (e) => {
+      console.log(`Angular velocity along the X-axis ${gyroscope.x}`);
+      console.log(`Angular velocity along the Y-axis ${gyroscope.y}`);
+      console.log(`Angular velocity along the Z-axis ${gyroscope.z}`);
+    });
+    gyroscope.start();
   }
   document.addEventListener("DOMContentLoaded", function () {
     initMap(); // Initialize first
