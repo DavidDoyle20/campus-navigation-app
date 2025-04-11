@@ -45,8 +45,8 @@
         //find next element that is not flagged as waypoint to remove.
         for (let i = 0; i < this.markers.length; i++) {
           if (
-            this.markers[i]._type != "start" &&
-            this.markers[i]._type != "end"
+              this.markers[i]._type != "start" &&
+              this.markers[i]._type != "end"
           ) {
             const oldestMarker = this.markers[i];
             this.removeMarker(oldestMarker);
@@ -106,6 +106,21 @@
       this._updateFilters();
       this.toggleMarkers(level);
       this._emitLevelChange();
+      try {
+        for(let i = 0; i < this._control.$el.children.length; i++) {
+          for(let j = 0; j< this.markers.length; j++){
+            if ((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == this._control.$el.children[i].innerText) {
+              this._control.$el.children[i].style.background = '#007ffb';
+            }
+            if (this._control.$el.children[i].className == "maplibregl-ctrl-active"){
+              this._control.$el.children[i].style.background = '#ffbd00';
+            }
+          }
+        }
+      }
+      catch (e){
+        console.error("An error occurred:", e.message);
+      }
       this._updateRouteVisibility();
       this._updateRoomVisibility();
     }
