@@ -107,7 +107,21 @@
       this.toggleMarkers(level);
       this._emitLevelChange();
       this._updateRouteVisibility();
+      this._updateFloorColor();
       this._updateRoomVisibility();
+    }
+
+    _updateFloorColor() {
+      //a little janky but this hilights floors that have markers set on them.
+      for (let i = 0; i < this._control.$el.children.length; i++) {
+        for (let j = 0; j < this.markers.length; j++) {
+          if ((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == this._control.$el.children[i].innerText) {
+            this._control.$el.children[i].style.background = '#007ffb';
+          }
+        }
+        if (this._control.$el.children[i].className == "maplibregl-ctrl-active")
+          this._control.$el.children[i].style.background = '#ffbd00';
+      }
     }
 
     removeRoute() {
