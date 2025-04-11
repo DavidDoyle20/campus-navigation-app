@@ -109,6 +109,21 @@
       this._updateRouteVisibility();
       this._updateFloorColor();
       this._updateRoomVisibility();
+      try {
+        for(let i = 0; i < this._control.$el.children.length; i++) {
+          for(let j = 0; j< this.markers.length; j++){
+            if ((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == this._control.$el.children[i].innerText) {
+              this._control.$el.children[i].style.background = '#007ffb';
+            }
+            if (this._control.$el.children[i].className == "maplibregl-ctrl-active"){
+              this._control.$el.children[i].style.background = '#ffbd00';
+            }
+          }
+        }
+      }
+      catch (e){
+        console.error("An error occurred:", e.message);
+      }
     }
 
     _updateFloorColor() {
