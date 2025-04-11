@@ -112,8 +112,16 @@
       try {
         for(let i = 0; i < this._control.$el.children.length; i++) {
           for(let j = 0; j< this.markers.length; j++){
-            if ((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == this._control.$el.children[i].innerText) {
-              this._control.$el.children[i].style.background = '#007ffb';
+            if (this.markers[j]._level == this._control.$el.children[i].innerText) {
+              if(this.markers[j]._type == 'start' && this.markers[j]._type == 'end'){
+                this._control.$el.children[i].style.background-image = linear-gradient(to left, #007ffb 0%, #007ffb 50%, #4CAF50 50%);
+              }
+              else if (this.markers[j]._type == 'start'){
+                this._control.$el.children[i].style.background = '#007ffb';
+              }
+              else if (this.markers[j]._type == 'end'){
+                this._control.$el.children[i].style.background = '#4CAF50';
+              }
             }
             if (this._control.$el.children[i].className == "maplibregl-ctrl-active"){
               this._control.$el.children[i].style.background = '#ffbd00';
