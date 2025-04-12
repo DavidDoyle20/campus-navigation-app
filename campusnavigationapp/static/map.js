@@ -856,6 +856,10 @@
   }
 
   // function to be called from search bar
+  //todo: if only building name is searched highlight the full building.
+  //todo: parse user input better. look for spaces or any other special characters like , to seperate room and building refs
+  //todo: fix case sensitivity. should find building and room regardless of case.
+
   async function search(address) {
     const arr = address.split(",");
     if (arr.length < 2) {
@@ -966,6 +970,7 @@
     gl.fitBounds(bounds, { padding: 20, maxZoom: 21 });
   }
 
+  //could add , to the end of each building name, otherwise wil l need to adjust search function
   let name; // Global variable to store the selected name
   const buildings = [
     "Engineering & Mathematical Sciences Building",
