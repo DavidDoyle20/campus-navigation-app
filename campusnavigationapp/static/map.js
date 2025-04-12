@@ -106,84 +106,44 @@
       this._updateFilters();
       this.toggleMarkers(level);
       this._emitLevelChange();
-<<<<<<< HEAD
       this._updateRouteVisibility();
       this._updateFloorColor();
       this._updateRoomVisibility();
-      try {
-        let start, end;
-        for(let i = 0; i < this._control.$el.children.length; i++) {
-          start=false;
-          end = false;
-          for(let j = 0; j< this.markers.length; j++){
-            if (this.markers[j]._level == this._control.$el.children[i].innerText) {
-              if (this.markers[j]._type == 'start'){
-                this._control.$el.children[i].style.background = '#007ffb';
-                start = true;
-              }
-              else if (this.markers[j]._type == 'end'){
-                this._control.$el.children[i].style.background = '#4CAF50';
-                end = true;
-              }
-            }
-            if(start && end){
-              this._control.$el.children[i].style.backgroundImage = "linear-gradient(to left, #007ffb 0%, #007ffb 50%, #4CAF50 50%)";
-
-            }
-            if (this._control.$el.children[i].className == "maplibregl-ctrl-active"){
-              this._control.$el.children[i].style.background = '#ffbd00';
-            }
-
-          }
-        }
-      }
-      catch (e){
-        console.error("An error occurred:", e.message);
-      }
     }
 
     _updateFloorColor() {
-      //a little janky but this hilights floors that have markers set on them.
-      for (let i = 0; i < this._control.$el.children.length; i++) {
-        for (let j = 0; j < this.markers.length; j++) {
-          if ((this.markers[j]._type == 'start' || this.markers[j]._type == 'end') && this.markers[j]._level == this._control.$el.children[i].innerText) {
-            this._control.$el.children[i].style.background = '#007ffb';
+      try {
+        let start, end;
+        for (let i = 0; i < this._control.$el.children.length; i++) {
+          start = false;
+          end = false;
+          for (let j = 0; j < this.markers.length; j++) {
+            if (
+              this.markers[j]._level == this._control.$el.children[i].innerText
+            ) {
+              if (this.markers[j]._type == "start") {
+                this._control.$el.children[i].style.background = "#007ffb";
+                start = true;
+              } else if (this.markers[j]._type == "end") {
+                this._control.$el.children[i].style.background = "#4CAF50";
+                end = true;
+              }
+            }
+            if (start && end) {
+              this._control.$el.children[i].style.backgroundImage =
+                "linear-gradient(to left, #007ffb 0%, #007ffb 50%, #4CAF50 50%)";
+            }
+            if (
+              this._control.$el.children[i].className ==
+              "maplibregl-ctrl-active"
+            ) {
+              this._control.$el.children[i].style.background = "#ffbd00";
+            }
           }
         }
-        if (this._control.$el.children[i].className == "maplibregl-ctrl-active")
-          this._control.$el.children[i].style.background = '#ffbd00';
+      } catch (e) {
+        console.error("An error occurred:", e.message);
       }
-=======
-      //a little janky but this hilights floors that have markers set on them.
-      for (let i = 0; i < this._control.$el.children.length; i++) {
-        for (let j = 0; j < this.markers.length; j++) {
-          if (
-            (this.markers[j]._type == "start" ||
-              this.markers[j]._type == "end") &&
-            this.markers[j]._level == i
-          ) {
-            this._control.$el.children[
-              this._control.$el.children.length - 1 - i
-            ].style.background = "#007ffb";
-          }
-        }
-      }
-      //a little janky but this hilights floors that have markers set on them.
-      for (let i = 0; i < this._control.$el.children.length; i++) {
-        for (let j = 0; j < this.markers.length; j++) {
-          if (
-            (this.markers[j]._type == "start" ||
-              this.markers[j]._type == "end") &&
-            this.markers[j]._level == i
-          ) {
-            this._control.$el.children[
-              this._control.$el.children.length - 1 - i
-            ].style.background = "#007ffb";
-          }
-        }
-      }
-      this._updateRouteVisibility();
->>>>>>> 3f83cdd (resolved merge conflicts)
     }
 
     removeRoute() {
@@ -490,7 +450,7 @@
     window.addEventListener("resize", () => gl.resize());
     window.addEventListener("zoomevent", () => gl.resize());
 
-    let gyroscope = new Gyroscope({ frequence: 60 })
+    let gyroscope = new Gyroscope({ frequence: 60 });
     gyroscope.addEventListener("reading", (e) => {
       console.log(`Angular velocity along the X-axis ${gyroscope.x}`);
       console.log(`Angular velocity along the Y-axis ${gyroscope.y}`);
