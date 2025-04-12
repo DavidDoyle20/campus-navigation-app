@@ -109,6 +109,36 @@
       this._updateRouteVisibility();
       this._updateFloorColor();
       this._updateRoomVisibility();
+      try {
+        let start, end;
+        for(let i = 0; i < this._control.$el.children.length; i++) {
+          start=false;
+          end = false;
+          for(let j = 0; j< this.markers.length; j++){
+            if (this.markers[j]._level == this._control.$el.children[i].innerText) {
+              if (this.markers[j]._type == 'start'){
+                this._control.$el.children[i].style.background = '#007ffb';
+                start = true;
+              }
+              else if (this.markers[j]._type == 'end'){
+                this._control.$el.children[i].style.background = '#4CAF50';
+                end = true;
+              }
+            }
+            if(start && end){
+              this._control.$el.children[i].style.backgroundImage = "linear-gradient(to left, #007ffb 0%, #007ffb 50%, #4CAF50 50%)";
+
+            }
+            if (this._control.$el.children[i].className == "maplibregl-ctrl-active"){
+              this._control.$el.children[i].style.background = '#ffbd00';
+            }
+
+          }
+        }
+      }
+      catch (e){
+        console.error("An error occurred:", e.message);
+      }
     }
 
     _updateFloorColor() {
@@ -849,6 +879,10 @@
   }
 
   // function to be called from search bar
+  //todo: if only building name is searched highlight the full building.
+  //todo: parse user input better. look for spaces or any other special characters like , to seperate room and building refs
+  //todo: fix case sensitivity. should find building and room regardless of case.
+
   async function search(address) {
     const arr = address.split(",");
     if (arr.length < 2) {
@@ -959,6 +993,7 @@
     gl.fitBounds(bounds, { padding: 20, maxZoom: 21 });
   }
 
+  //could add , to the end of each building name, otherwise wil l need to adjust search function
   let name; // Global variable to store the selected name
   const buildings = [
     "Engineering & Mathematical Sciences Building",

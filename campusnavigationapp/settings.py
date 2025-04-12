@@ -10,12 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import logging
 import os
+from pathlib import Path
+
+import boto3
 import dj_database_url
 from dotenv import load_dotenv
-import boto3
-import logging
-from pathlib import Path
 
 load_dotenv()
 
@@ -29,7 +30,7 @@ def get_ssm_parameter(param_name, default=None):
         return default
 
 def get_env_variable(var_name, ssm_path=None):
-    # First, try to get from environment (including .env file)
+    # First, try to get from environment (including ..env file)
     value = os.getenv(var_name)
     if value is not None:
         return value
@@ -64,7 +65,6 @@ print(f"SECRET_KEY: {SECRET_KEY}")
 print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
 print(f"DATABASE_URL: {DATABASE_URL}")
 print("\n")
-boto3.set_stream_logger('', logging.DEBUG)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
