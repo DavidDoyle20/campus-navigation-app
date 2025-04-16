@@ -875,34 +875,123 @@
   }
 
   // function to be called from search bar
-  //todo: if only building name is searched highlight the full building.
+  //done: if only building name is searched highlight the full building.
   //todo: parse user input better. look for spaces or any other special characters like , to seperate room and building refs
-  //todo: fix case sensitivity. should find building and room regardless of case.
+  //done: fix case sensitivity. should find building and room regardless of case.
 
   async function search(address) {
-    const arr = address.split(",");
-    if (arr.length < 2) {
+    console.log(address, typeof address);
+    // Doesnt contain room number so search for building
+    if (typeof address !== "string") {
+      displayBuilding(address);
       return;
     }
-    const building_name = arr[0].trim();
-    const room_number = arr[1].trim();
-    const response = await fetch("https://osm.uwmnav.dedyn.io/v1/find-room", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    if (!address.includes(",")) {
+      const building_name = address.trim();
+      const buildings = await loadBuildings();
+      const building = buildings.find((b) => b.name === building_name);
+      displayBuilding(building);
+    } else {
+      const arr = address.split(",");
+      if (arr.length < 2) {
+        return;
+      }
+      const building_name = arr[0].trim();
+      const room_number = arr[1].trim();
+      const response = await fetch("https://osm.uwmnav.dedyn.io/v1/find-room", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          building: building_name,
+          room: room_number,
+        }),
+      });
+
+      const data = await response.json();
+      console.log(data);
+      displayRoom(data);
+    }
+  }
+
+  function displayBuilding(data) {
+    if (gl.getLayer("building-fill")) {
+      gl.removeLayer("building-fill");
+    }
+    if (gl.getLayer("building-line")) {
+      gl.removeLayer("building-line");
+    }
+
+    if (gl.getSource("building-data")) {
+      gl.removeSource("building-data");
+    }
+
+    const coordinates = data.nodes.map((node) => [
+      node.longitude,
+      node.latitude,
+    ]);
+
+    // Ensure polygon is closed
+    if (
+      JSON.stringify(coordinates[0]) !==
+      JSON.stringify(coordinates[coordinates.length - 1])
+    ) {
+      coordinates.push(coordinates[0]);
+    }
+
+    gl.addSource("building-data", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: {
+              type: "Polygon",
+              coordinates: [coordinates],
+            },
+          },
+        ],
       },
-      body: JSON.stringify({
-        building: building_name,
-        room: room_number,
-      }),
     });
 
-    const data = await response.json();
-    console.log(data);
-    displayRoom(data);
+    gl.addLayer({
+      id: "building-fill",
+      type: "fill",
+      source: "building-data",
+      paint: {
+        "fill-color": "#3388ff",
+        "fill-opacity": 0.5,
+      },
+    });
+
+    gl.addLayer({
+      id: "building-line",
+      type: "line",
+      source: "building-data",
+      paint: {
+        "line-color": "#3388ff",
+        "line-width": 2,
+      },
+    });
+
+    // Zoom to room
+    const bounds = coordinates.reduce(
+      (acc, coord) => acc.extend(coord),
+      new maplibregl.LngLatBounds(coordinates[0], coordinates[0])
+    );
+    gl.fitBounds(bounds, { padding: 20, maxZoom: 21 });
   }
 
   function displayRoom(data) {
+    // Clear building layers if they are present
+    if (gl.getLayer("building-fill")) {
+      gl.removeLayer("building-fill");
+    }
+    if (gl.getLayer("building-line")) {
+      gl.removeLayer("building-line");
+    }
     indoorEqual.roomLayers.forEach((_, layerId) => {
       if (gl.getLayer(layerId)) {
         gl.removeLayer(layerId);
@@ -989,58 +1078,90 @@
     gl.fitBounds(bounds, { padding: 20, maxZoom: 21 });
   }
 
-  //could add , to the end of each building name, otherwise wil l need to adjust search function
+  class Building {
+    constructor(latitude, longitude, osm_id, name, nodes) {
+      this.latitude = latitude;
+      this.longitude = longitude;
+      this.osm_id = osm_id;
+      this.name = name;
+      this.nodes = nodes;
+    }
+  }
+
+  let buildingsCache = null;
+
+  async function loadBuildings() {
+    if (buildingsCache) return buildingsCache;
+
+    try {
+      const response = await fetch("https://osm.uwmnav.dedyn.io/v1/building");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+
+      const buildingsArray =
+        Array.isArray(data) && typeof data[0]?.count === "number"
+          ? data.slice(1)
+          : data;
+
+      buildingsCache = buildingsArray
+        .filter((obj) => obj.osm_id && obj.name)
+        .map(
+          (obj) =>
+            new Building(
+              obj.latitude,
+              obj.longitude,
+              obj.osm_id,
+              obj.name,
+              obj.nodes
+            )
+        );
+      return buildingsCache;
+    } catch (error) {
+      console.error("Fetching error:", error);
+      return [];
+    }
+  }
+
   let name; // Global variable to store the selected name
-  const buildings = [
-    "Engineering & Mathematical Sciences Building",
-    "Lapham Hall",
-    "Lubar Hall",
-    "Physics Building",
-    "J. Martin Klotsche Center",
-    "Pearse Hall",
-    "Garland Hall",
-    "Vogel Hall",
-    "Curtin Hall",
-    "Mitchell Hall",
-    "Arts Center Lecture Hall",
-    "Mellencamp Hall",
-    "Theatre Building",
-    "Music Building",
-    "Art Building",
-    "UWM Student Union",
-    "Bolton Hall",
-    "Golda Meir Library",
-    "Kenwood Interdisciplinary Research Complex",
-    "Chemistry Building",
-  ];
 
   new Autocomplete("#autocomplete", {
-    search: (input) => {
-      return new Promise((resolve) => {
-        if (!input) {
-          resolve([]);
-          return;
-        }
-        const lowerCaseInput = input.toLowerCase();
-        const filteredResults = buildings.filter((item) =>
-          item.toLowerCase().startsWith(lowerCaseInput)
-        );
-        resolve(filteredResults);
-      });
+    search: async (input) => {
+      if (!input) return [];
+      const lowerCaseInput = input.toLowerCase();
+      const buildings = await loadBuildings();
+      return buildings.filter((item) =>
+        item.name.toLowerCase().startsWith(lowerCaseInput)
+      );
     },
-
+    getResultValue: (item) => item.name,
     onSubmit: (result) => {
       name = result;
       const inputBox = document.querySelector("#building-search");
       console.log(`Selected item: ${name}`);
+      search(name);
+
+      appendCommaToAutocomplete();
     },
   });
 
   $("#building-search").on("keyup", function (e) {
     if (e.key === "Enter" || e.keyCode === 13) {
-      name = document.querySelector("#building-search").value;
+      const inputBox = document.querySelector("#building-search");
+      name = inputBox.value;
       console.log(`Searching address: ${name}`);
       search(name);
+      appendCommaToAutocomplete();
     }
   });
+
+  function appendCommaToAutocomplete() {
+    const inputBox = document.querySelector("#building-search");
+    const val = inputBox.value;
+    if (val.includes(", ")) {
+      return;
+    }
+    inputBox.value = inputBox.value + ", ";
+  }
 })();
