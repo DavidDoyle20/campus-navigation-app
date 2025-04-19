@@ -25,7 +25,6 @@
     <link
       href="https://unpkg.com/maplibre-gl-indoorequal@latest/maplibre-gl-indoorequal.css"
       rel="stylesheet"
-
     />
     <link
       href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css"
@@ -35,18 +34,16 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
     />
-    <link   
-      rel="stylesheet"   
-      href="https://unpkg.com/@trevoreyre/autocomplete-js/dist/style.css" 
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/@trevoreyre/autocomplete-js/dist/style.css"
     />
 
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/maplibre-gl-indoorequal@latest/dist/maplibre-gl-indoorequal.umd.min.js"></script>
-    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="https://unpkg.com/@trevoreyre/autocomplete-js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-
 
     <link href="{% static 'styles.css' %}" rel="stylesheet" type="text/css" />
 
@@ -75,7 +72,6 @@
               <!-- list items added here -->
             </ul>
           </li>
-          </li>
           <li>
             <a href="#" class="accessible"
               ><span class="material-symbols-outlined"> accessible </span
@@ -95,7 +91,7 @@
             >
           </li>
           <li>
-            <a href="#"
+            <a href="#" id="help-link"
               ><span class="material-symbols-outlined"> help </span>Help</a
             >
           </li>
@@ -114,7 +110,7 @@
               ><span class="material-symbols-outlined"> settings </span
               >Settings</a
             >
-        </li>
+          </li>
           <li>
             <a href="{% url 'logout' %}"
               ><span class="material-symbols-outlined"> logout </span>Logout</a
@@ -125,20 +121,94 @@
 
       <div id="autocomplete" class="autocomplete">
         <input id="building-search" class="autocomplete-input" />
-        <ul  id="ull" class="autocomplete-result-list"></ul>
+        <ul id="ull" class="autocomplete-result-list"></ul>
       </div>
 
       <button id="start-navigation" style="display: none">
         Start Navigation
       </button>
-      <!--footer for attributions. might want to add overpass, but from what I could tell it is just apart of osm -->
+
       <div class="attributions">
-        <a href="https://osmfoundation.org">&copy;OpenStreetMap</a> | <a href="https://indoorequal.com/">&copy; indoor= </a> | <a href="https://maplibre.org/">&copy; MapLibre</a> | <a href="https://github.com/DavidDoyle20/osr-campusnavapp?tab=readme-ov-file">&copy;OSR</a>
+        <a href="https://osmfoundation.org">&copy;OpenStreetMap</a> |
+        <a href="https://indoorequal.com/">&copy; indoor= </a> |
+        <a href="https://maplibre.org/">&copy; MapLibre</a> |
+        <a href="https://github.com/DavidDoyle20/osr-campusnavapp?tab=readme-ov-file">&copy;OSR</a>
+      </div>
     </div>
+
+    <!-- ✅ Help Modal Start -->
+    <div id="help-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" id="close-help">&times;</span>
+        <h2>Welcome to Campus Nav – Your Smart Campus Navigation Tool</h2>
+        <p>
+          <strong>Campus Nav</strong> is a digital map designed to help UWM students and staff navigate the campus more easily. Whether you're new to campus or just need directions to a specific building, this tool helps you plan your route efficiently.
+        </p>
+
+        <h3>How It Works</h3>
+        <ul>
+          <li><strong>Interactive Campus Map:</strong> The map shows major buildings, walkways, and landmarks. Yellow highlights mark accessible areas like elevators or ramps. Icons indicate building entrances, parking lots, and other important locations.</li>
+          <li>
+            <strong>Set Start and Destination:</strong> Right-click anywhere on the map to place markers:
+            <ul>
+              <li><strong>Set Start (Blue):</strong> Marks your starting location.</li>
+              <li><strong>Set Destination (Green):</strong> Marks your destination.</li>
+              <li><strong>Remove Marker (Red):</strong> Clears a marker from the map.</li>
+            </ul>
+          </li>
+          <li>After setting both, click the <strong>Start Navigation</strong> button that appears at the bottom.</li>
+        </ul>
+
+        <h3>Side Navigation Panel</h3>
+        <ul>
+          <li><strong>Bookmarks:</strong> View saved locations quickly.</li>
+          <li><strong>Accessible Route:</strong> Avoid stairs and obstacles.</li>
+          <li><strong>Add Bookmark:</strong> Save your current location.</li>
+          <li><strong>History:</strong> View previous destinations.</li>
+          <li><strong>Help:</strong> You’re here!</li>
+          <li><strong>Profile & Settings:</strong> View profile or log out.</li>
+        </ul>
+
+        <h3>Notes</h3>
+        <ul>
+          <li>UWM login is required to use the app.</li>
+          <li>Use zoom and pan to explore.</li>
+          <li>Routes are calculated based on indoor/outdoor building data.</li>
+          <li>Accessible route accuracy depends on available data.</li>
+          <li>This is an early version — we’re always improving it.</li>
+        </ul>
+      </div>
     </div>
+    <!-- ✅ Help Modal End -->
+
+    <!-- Help Modal Script -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const helpLink = document.getElementById("help-link");
+        const modal = document.getElementById("help-modal");
+        const closeBtn = document.getElementById("close-help");
+
+        helpLink.addEventListener("click", function (e) {
+          e.preventDefault();
+          modal.style.display = "block";
+        });
+
+        closeBtn.addEventListener("click", function () {
+          modal.style.display = "none";
+        });
+
+        window.addEventListener("click", function (e) {
+          if (e.target === modal) {
+            modal.style.display = "none";
+          }
+        });
+      });
+    </script>
+
+    <!-- Icon Path -->
     <script>
       window.iconUrl = "{% static 'marker-svgrepo-com.svg' %}";
     </script>
-   <script type="module" src="{% static 'map.js' %}"></script>
+    <script type="module" src="{% static 'map.js' %}"></script>
   </body>
 </html>

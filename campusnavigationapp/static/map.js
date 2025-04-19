@@ -1165,3 +1165,25 @@
     inputBox.value = inputBox.value + ", ";
   }
 })();
+document.addEventListener("DOMContentLoaded", function () {
+  const helpLink = document.getElementById("help-link");
+  const modal = document.getElementById("help-modal");
+  const closeBtn = document.getElementById("close-help");
+
+  if (helpLink && modal && closeBtn) {
+    helpLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      modal.style.display = "block";
+    });
+
+    closeBtn.addEventListener("click", function () {
+      modal.style.display = "none";
+    });
+
+    window.addEventListener("click", function (e) {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+  }
+});
