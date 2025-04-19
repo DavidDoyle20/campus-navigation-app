@@ -1224,7 +1224,7 @@ let animatedRouteCoordinates = [];
 /**
  * Animates a marker along a list of coordinates at a given speed.
  */
-function animateMarker(marker, coordinates, speed = 0.00005, map = null) {
+function animateMarker(marker, coordinates, speed = 0.000005, map = null) {
   let index = 0;
 
   function move() {
@@ -1282,7 +1282,7 @@ document.getElementById("replay-animation").addEventListener("click", () => {
       .setLngLat(animatedRouteCoordinates[0])
       .addTo(gl);
 
-    animateMarker(movingMarker, animatedRouteCoordinates, 0.00005, gl);
+    animateMarker(movingMarker, animatedRouteCoordinates, 0.000005, gl);
   } else {
     console.warn("Replay failed: Route or map not ready.");
   }
