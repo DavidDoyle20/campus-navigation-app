@@ -2,6 +2,7 @@
   let indoorEqual, gl;
   let accessible = false;
 
+
   class CustomIndoorEqual extends IndoorEqual {
     constructor(map, options) {
       super(map, options);
@@ -804,20 +805,19 @@
 
   //updates map to show the routing
   function displayRouteOnMap(routeGEOJSON) {
-    console.log(
-      "Level types:",
-      routeGEOJSON.features.map((f) => ({
-        raw: f.properties.level,
-        parsed: parseFloat(f.properties.level),
-        type: typeof f.properties.level,
-      }))
-    );
-    // Clear previous route
-    if (gl.getSource("route")) {
-      gl.getSource("route").setData(routeGEOJSON);
-    }
+   console.log(
+    "Level types:",
+    routeGEOJSON.features.map((f) => ({
+      raw: f.properties.level,
+      parsed: parseFloat(f.properties.level),
+      type: typeof f.properties.level,
+    }))
+  );
 
-    // Add new route source and layer
+  // Clear previous route if it exists
+  if (gl.getSource("route")) {
+    gl.getSource("route").setData(routeGEOJSON);
+  } else {
     gl.addSource("route", {
       type: "geojson",
       data: routeGEOJSON,
@@ -843,8 +843,38 @@
       },
       filter: ["==", ["get", "level"], indoorEqual.level],
     });
-    indoorEqual._updateRouteVisibility();
-    updateStartButtonVisibility();
+  }
+
+  indoorEqual._updateRouteVisibility();
+  updateStartButtonVisibility();
+
+  // Flatten all route coordinates
+  const allCoordinates = [];
+  routeGEOJSON.features.forEach((feature) => {
+    const coords = feature.geometry.coordinates;
+    coords.forEach((c) => allCoordinates.push(c));
+  });
+
+  // Save route for replay
+  animatedRouteCoordinates = allCoordinates;
+
+  // Animate marker along the route
+  if (allCoordinates.length > 1) {
+    // Remove existing marker
+    if (movingMarker) movingMarker.remove();
+
+    // Create new animated marker
+    movingMarker = new maplibregl.Marker({ color: "blue" })
+      .setLngLat(allCoordinates[0])
+      .addTo(gl);
+
+    // Start animation
+    animateMarker(movingMarker, allCoordinates, 0.00005, gl);
+
+    // Show Replay button
+    document.getElementById("replay-animation").style.display = "block";
+  }
+
 
     //zooms in/out the map to fit the full route in the screen.
     // const bounds = routeCoordinates.reduce(
@@ -1185,5 +1215,75 @@ document.addEventListener("DOMContentLoaded", function () {
         modal.style.display = "none";
       }
     });
+  }
+});
+// Declare global variables at the top of your file if not already there:
+let movingMarker = null;
+let animatedRouteCoordinates = [];
+
+/**
+ * Animates a marker along a list of coordinates at a given speed.
+ */
+function animateMarker(marker, coordinates, speed = 0.00005, map = null) {
+  let index = 0;
+
+  function move() {
+    if (index >= coordinates.length - 1) return;
+
+    const [start, end] = [coordinates[index], coordinates[index + 1]];
+    const dx = end[0] - start[0];
+    const dy = end[1] - start[1];
+
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const steps = Math.floor(distance / speed);
+    let step = 0;
+
+    function stepMove() {
+      if (step >= steps) {
+        index++;
+        move(); // move to next segment
+        return;
+      }
+
+      const lng = start[0] + (dx * step / steps);
+      const lat = start[1] + (dy * step / steps);
+      const position = [lng, lat];
+
+      marker.setLngLat(position);
+
+      if (map) {
+        map.easeTo({
+          center: position,
+          duration: 200,
+          zoom: map.getZoom(),
+        });
+      }
+
+      step++;
+      requestAnimationFrame(stepMove);
+    }
+
+    stepMove();
+  }
+
+  move();
+}
+
+/**
+ * Handles the Replay Animation button click.
+ */
+document.getElementById("replay-animation").addEventListener("click", () => {
+  console.log("Replay button clicked");
+
+  if (animatedRouteCoordinates.length > 1 && typeof gl !== "undefined") {
+    if (movingMarker) movingMarker.remove();
+
+    movingMarker = new maplibregl.Marker({ color: "blue" })
+      .setLngLat(animatedRouteCoordinates[0])
+      .addTo(gl);
+
+    animateMarker(movingMarker, animatedRouteCoordinates, 0.00005, gl);
+  } else {
+    console.warn("Replay failed: Route or map not ready.");
   }
 });
