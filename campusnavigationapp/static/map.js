@@ -77,7 +77,9 @@
     toggleMarkers(level = this.level) {
       // marker levels are numbers while the inddorequal level is a string
       if (this.location) {
-        const shouldShow = this.location._level + "" === level;
+        // const shouldShow = this.location._level + "" === level;
+        // should show regardless of level until elevation is implemented
+        const shouldShow = true;
         shouldShow ? this.location.addTo(this.map) : this.location.remove();
       }
       // Update regular markers
